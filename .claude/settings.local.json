@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__XcodeBuildMCP__discover_tools",
+      "mcp__XcodeBuildMCP__discover_projs",
+      "mcp__XcodeBuildMCP__build_sim_name_proj",
+      "mcp__XcodeBuildMCP__build_run_sim_name_proj",
+      "mcp__XcodeBuildMCP__tap",
+      "mcp__XcodeBuildMCP__screenshot",
+      "mcp__XcodeBuildMCP__swipe"
     ],
     "deny": []
   }

@@ -13,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### While implementing
 - You should update the plan as you work.
 - After you complete tasks in the plan, you should update and append detailed descriptions of the changes you made, so following tasks can be easily handed over to other engineers
+- Always use MVVM model when implementing
 
 ## Project Overview
 
@@ -39,10 +40,10 @@ The app uses SwiftData for persistence with a ModelContainer configured in the a
 ### Building and Running
 ```bash
 # Build for simulator
-xcodebuild -scheme "Party Games" -destination "platform=iOS Simulator,name=iPhone 15" build
+xcodebuild -scheme "Party Games" -destination "platform=iOS Simulator,name=iPhone 16" build
 
 # Run tests
-xcodebuild test -scheme "Party Games" -destination "platform=iOS Simulator,name=iPhone 15"
+xcodebuild test -scheme "Party Games" -destination "platform=iOS Simulator,name=iPhone 16"
 ```
 
 ### Testing Framework
