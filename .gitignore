@@ -1,0 +1,21 @@
+# Xcode user-specific settings
+**/xcuserdata/
+**/*.xcuserdatad/
+**/*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+
+# SwiftPM (Xcode integration) user data
+.swiftpm/xcode/
+**/.swiftpm/xcode/
+**/.swiftpm/xcode/package.xcworkspace/xcuserdata/
+
+# Build artifacts
+DerivedData/
+build/
+
+# macOS
+.DS_Store
+
+
