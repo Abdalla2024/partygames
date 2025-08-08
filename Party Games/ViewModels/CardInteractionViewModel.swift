@@ -53,13 +53,13 @@ final class CardInteractionViewModel {
     private let maxDragDistance: CGFloat = 200.0
     
     /// Duration for card exit animations
-    private let exitAnimationDuration: Double = 0.3
+    private let exitAnimationDuration: Double = 0.4
     
     /// Duration for card snap-back animations
     private let snapBackDuration: Double = 0.4
     
     /// Duration for next card reveal animation
-    private let revealAnimationDuration: Double = 0.2
+    private let revealAnimationDuration: Double = 0.3
     
     // MARK: - Dependencies
     
@@ -203,20 +203,27 @@ final class CardInteractionViewModel {
     private func performSwipeAction(direction: SwipeDirection) async {
         isAnimating = true
         
-        // Calculate exit position
-        let exitOffset = calculateExitOffset(for: direction)
+        // Calculate exit position with enhanced movement
+        let exitOffset = calculateEnhancedExitOffset(for: direction)
+        let exitRotation = calculateExitRotation(for: direction)
         
-        // Animate card exit
-        withAnimation(.easeInOut(duration: exitAnimationDuration)) {
+        // Animate card exit with smooth spring animation
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0.1)) {
             cardOffset = exitOffset
-            cardRotation = direction == .right ? maxRotationDegrees : -maxRotationDegrees
+            cardRotation = exitRotation
         }
+        
+        // Wait for half the animation to complete before processing
+        try? await Task.sleep(nanoseconds: UInt64(exitAnimationDuration * 0.5 * 1_000_000_000))
         
         // Process the swipe action
         await processSwipeAction(direction: direction)
         
-        // Reset card position for next card
-        await resetForNextCard()
+        // Complete the exit animation
+        try? await Task.sleep(nanoseconds: UInt64(exitAnimationDuration * 0.5 * 1_000_000_000))
+        
+        // Reset and reveal next card
+        await resetForNextCardWithReveal()
     }
     
     /// Animate card snapping back to center
@@ -244,6 +251,23 @@ final class CardInteractionViewModel {
         withAnimation(.easeOut(duration: revealAnimationDuration)) {
             showNextCard = false
             nextCardScale = 0.95
+        }
+        
+        isAnimating = false
+    }
+    
+    /// Enhanced reset with smooth reveal animation for next card
+    @MainActor
+    private func resetForNextCardWithReveal() async {
+        // Start with card positioned below (as if sliding up from stack)
+        cardOffset = CGSize(width: 0, height: 50)
+        cardRotation = 0.0
+        
+        // Animate card sliding up into position with spring animation
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.9, blendDuration: 0.1)) {
+            cardOffset = .zero
+            showNextCard = false
+            nextCardScale = 1.0
         }
         
         isAnimating = false
@@ -307,6 +331,42 @@ final class CardInteractionViewModel {
             return CGSize(width: cardOffset.width, height: -screenHeight)
         case .down:
             return CGSize(width: cardOffset.width, height: screenHeight)
+        }
+    }
+    
+    /// Calculate enhanced exit offset with more natural movement
+    /// - Parameter direction: The swipe direction
+    /// - Returns: The calculated enhanced exit offset
+    private func calculateEnhancedExitOffset(for direction: SwipeDirection) -> CGSize {
+        let cardWidth: CGFloat = 320
+        let cardHeight: CGFloat = 420
+        let exitMultiplier: CGFloat = 1.5
+        
+        switch direction {
+        case .right:
+            return CGSize(width: cardWidth * exitMultiplier, height: cardOffset.height * 0.3)
+        case .left:
+            return CGSize(width: -cardWidth * exitMultiplier, height: cardOffset.height * 0.3)
+        case .up:
+            return CGSize(width: cardOffset.width * 0.2, height: -cardHeight * exitMultiplier)
+        case .down:
+            return CGSize(width: cardOffset.width * 0.2, height: cardHeight * exitMultiplier)
+        }
+    }
+    
+    /// Calculate exit rotation based on swipe direction
+    /// - Parameter direction: The swipe direction
+    /// - Returns: The rotation angle in degrees
+    private func calculateExitRotation(for direction: SwipeDirection) -> Double {
+        switch direction {
+        case .right:
+            return maxRotationDegrees * 1.2
+        case .left:
+            return -maxRotationDegrees * 1.2
+        case .up:
+            return cardRotation * 0.5 // Maintain current rotation but reduce it
+        case .down:
+            return cardRotation * 0.5
         }
     }
     

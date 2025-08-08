@@ -249,8 +249,7 @@ struct GameSessionView: View {
                     .stroke(Color.blue.opacity(0.3), lineWidth: 1)
             )
             .frame(width: 320, height: 420)
-            .scaleEffect(1.0 - (CGFloat(stackIndex + 1) * 0.03))
-            .offset(y: CGFloat(stackIndex + 1) * 6)
+            .offset(x: CGFloat(stackIndex + 1) * 2, y: CGFloat(stackIndex + 1) * 8)
             .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
     

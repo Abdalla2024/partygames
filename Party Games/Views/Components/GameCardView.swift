@@ -279,18 +279,9 @@ struct GameCardView: View {
             .fixedSize(horizontal: false, vertical: false)
     }
     
-    /// Card footer with difficulty and usage indicators
+    /// Card footer with usage indicator only
     private var cardFooter: some View {
         HStack {
-            // Difficulty Level
-            HStack(spacing: 2) {
-                ForEach(1...5, id: \.self) { level in
-                    Circle()
-                        .fill(level <= card.difficultyLevel ? colorScheme.accentColor : Color.gray.opacity(0.3))
-                        .frame(width: 6, height: 6)
-                }
-            }
-            
             Spacer()
             
             // Usage Count (if > 0)
