@@ -36,59 +36,66 @@ struct GameSessionView: View {
     // MARK: - Body
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Clean modern dark background
-                Color(red: 0.05, green: 0.05, blue: 0.07) // Modern dark background
-                    .ignoresSafeArea()
-                
-                VStack(spacing: 40) {
-                    // Clean modern title
+        ZStack {
+            // Completely black background
+            Color.black
+                .ignoresSafeArea()
+            
+            VStack(spacing: 40) {
+                // Title with game icon - smaller and with top padding
+                HStack(spacing: 12) {
+                    Image(category.iconName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 32, height: 32)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    
                     Text(category.name)
-                        .font(.system(size: 32, weight: .bold, design: .default))
+                        .font(.system(size: 22, weight: .semibold, design: .default))
                         .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    // Card Stack
-                    if gameSessionVM.isLoading {
-                        VStack(spacing: 20) {
-                            ProgressView()
-                                .progressViewStyle(
-                                    CircularProgressViewStyle(
-                                        tint: .white
-                                    )
-                                )
-                                .scaleEffect(1.5)
-                            
-                            Text("Loading Cards...")
-                                .font(.system(size: 16, weight: .medium, design: .default))
-                                .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.8))
-                        }
-                    } else if let errorMessage = gameSessionVM.errorMessage {
-                        ErrorView(message: errorMessage) {
-                            Task { await initializeSession() }
-                        }
-                    } else if gameSessionVM.isSessionCompleted {
-                        CompletionView {
-                            Task { await gameSessionVM.restartSession() }
-                        } onDismiss: {
-                            dismiss()
-                        }
-                    } else {
-                        cardStack
-                    }
-                    
-                    Spacer()
-                    
-                    // Control buttons
-                    controlButtons
                 }
-                .padding()
+                .padding(.top, 20)
+                
+                Spacer()
+                
+                // Card Stack
+                if gameSessionVM.isLoading {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .progressViewStyle(
+                                CircularProgressViewStyle(
+                                    tint: .white
+                                )
+                            )
+                            .scaleEffect(1.5)
+                        
+                        Text("Loading Cards...")
+                            .font(.system(size: 16, weight: .medium, design: .default))
+                            .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.8))
+                    }
+                } else if let errorMessage = gameSessionVM.errorMessage {
+                    ErrorView(message: errorMessage) {
+                        Task { await initializeSession() }
+                    }
+                } else if gameSessionVM.isSessionCompleted {
+                    CompletionView {
+                        Task { await gameSessionVM.restartSession() }
+                    } onDismiss: {
+                        dismiss()
+                    }
+                } else {
+                    cardStack
+                }
+                
+                Spacer()
+                
+                // Control buttons
+                controlButtons
             }
-            .task {
-                await initializeSession()
-            }
+            .padding()
+        }
+        .task {
+            await initializeSession()
         }
     }
     
@@ -138,29 +145,14 @@ struct GameSessionView: View {
                 }
                 .frame(width: 70, height: 50)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(
-                            LinearGradient(
-                                colors: gameSessionVM.canGoPrevious ? [
-                                    Color(red: 0.2, green: 0.2, blue: 0.25),
-                                    Color(red: 0.15, green: 0.15, blue: 0.20)
-                                ] : [
-                                    Color(red: 0.1, green: 0.1, blue: 0.12),
-                                    Color(red: 0.08, green: 0.08, blue: 0.10)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .stroke(
-                            Color(red: 0.3, green: 0.3, blue: 0.35).opacity(gameSessionVM.canGoPrevious ? 0.6 : 0.3),
-                            lineWidth: 1
-                        )
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(gameSessionVM.canGoPrevious ? Color(red: 0.13, green: 0.13, blue: 0.15) : Color(red: 0.08, green: 0.08, blue: 0.10))
+                        .stroke(gameSessionVM.canGoPrevious ? Color(red: 0.19, green: 0.19, blue: 0.22) : Color(red: 0.12, green: 0.12, blue: 0.14), lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
             .disabled(!gameSessionVM.canGoPrevious)
-            .foregroundColor(gameSessionVM.canGoPrevious ? Color(red: 0.8, green: 0.8, blue: 0.9) : Color(red: 0.4, green: 0.4, blue: 0.5))
+            .foregroundColor(gameSessionVM.canGoPrevious ? .white : Color(red: 0.4, green: 0.4, blue: 0.5))
             
             // Shuffle button
             Button(action: {
