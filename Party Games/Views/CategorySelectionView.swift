@@ -20,14 +20,8 @@ struct CategorySelectionView: View {
     /// ViewModel for managing category data and state
     @State private var categoriesViewModel: GameCategoriesViewModel
     
-    /// Selected category for game session
-    @State private var selectedCategory: GameCategory?
-    
     /// Search text for filtering categories
     @State private var searchText = ""
-    
-    /// Controls the game session sheet presentation
-    @State private var showingGameSession = false
     
     // MARK: - Initialization
     
@@ -48,9 +42,6 @@ struct CategorySelectionView: View {
                 }
                 .refreshable {
                     await refreshData()
-                }
-                .sheet(item: $selectedCategory) { category in
-                    GameSessionView(category: category, modelContext: modelContext)
                 }
         }
     }
@@ -76,10 +67,13 @@ struct CategorySelectionView: View {
         ScrollView {
             LazyVGrid(columns: gridColumns, spacing: 20) {
                 ForEach(filteredCategories) { category in
-                    CategoryCardView(
-                        category: category,
-                        onTap: { selectCategory(category) }
-                    )
+                    NavigationLink(destination: GameSessionView(category: category, modelContext: modelContext)) {
+                        CategoryCardView(
+                            category: category,
+                            onTap: { }
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding()
@@ -170,10 +164,6 @@ struct CategorySelectionView: View {
     
     // MARK: - Actions
     
-    private func selectCategory(_ category: GameCategory) {
-        selectedCategory = category
-    }
-    
     private func loadInitialData() async {
         await categoriesViewModel.loadCategories()
     }
@@ -189,55 +179,45 @@ struct CategoryCardView: View {
     let category: GameCategory
     let onTap: () -> Void
     
-    @State private var isPressed = false
-    
     var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 12) {
-                // Category Icon
-                AsyncImage(url: nil) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Image(category.iconName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                }
-                .frame(width: 60, height: 60)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-                
-                VStack(spacing: 4) {
-                    // Category Name
-                    Text(category.name)
-                        .font(.headline)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                    
-                    // Card Count
-                    Text("\(category.cards.count) cards")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+        VStack(spacing: 12) {
+            // Category Icon
+            AsyncImage(url: nil) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } placeholder: {
+                Image(category.iconName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
             }
-            .padding(16)
-            .frame(height: 160)
-            .frame(maxWidth: .infinity)
-            .background(Color(UIColor.systemBackground))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(UIColor.separator), lineWidth: 1)
-            )
+            .frame(width: 60, height: 60)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+            
+            VStack(spacing: 4) {
+                // Category Name
+                Text(category.name)
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                
+                // Card Count
+                Text("\(category.cards.count) cards")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
-        .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
+        .padding(16)
+        .frame(height: 160)
+        .frame(maxWidth: .infinity)
+        .background(Color(UIColor.systemBackground))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(UIColor.separator), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         .accessibilityLabel(category.name)
         .accessibilityValue("\(category.cards.count) cards available")
         .accessibilityHint("Double tap to start playing")
