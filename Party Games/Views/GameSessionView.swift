@@ -38,27 +38,33 @@ struct GameSessionView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                LinearGradient(
-                    colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                // Clean modern dark background
+                Color(red: 0.05, green: 0.05, blue: 0.07) // Modern dark background
+                    .ignoresSafeArea()
                 
                 VStack(spacing: 40) {
-                    // Game title
+                    // Clean modern title
                     Text(category.name)
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .font(.system(size: 32, weight: .bold, design: .default))
+                        .foregroundColor(.white)
                     
                     Spacer()
                     
                     // Card Stack
                     if gameSessionVM.isLoading {
-                        ProgressView("Loading Cards...")
-                            .scaleEffect(1.2)
+                        VStack(spacing: 20) {
+                            ProgressView()
+                                .progressViewStyle(
+                                    CircularProgressViewStyle(
+                                        tint: .white
+                                    )
+                                )
+                                .scaleEffect(1.5)
+                            
+                            Text("Loading Cards...")
+                                .font(.system(size: 16, weight: .medium, design: .default))
+                                .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.8))
+                        }
                     } else if let errorMessage = gameSessionVM.errorMessage {
                         ErrorView(message: errorMessage) {
                             Task { await initializeSession() }
@@ -119,46 +125,82 @@ struct GameSessionView: View {
     // MARK: - Control Buttons
     
     private var controlButtons: some View {
-        HStack(spacing: 60) {
+        HStack(spacing: 40) {
             // Previous button
             Button(action: {
                 Task { await gameSessionVM.previousCard() }
             }) {
-                VStack(spacing: 8) {
-                    Image(systemName: "chevron.left.circle.fill")
-                        .font(.title2)
+                VStack(spacing: 6) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
                     Text("Previous")
-                        .font(.caption)
+                        .font(.system(size: 11, weight: .medium, design: .default))
                 }
+                .frame(width: 70, height: 50)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: gameSessionVM.canGoPrevious ? [
+                                    Color(red: 0.2, green: 0.2, blue: 0.25),
+                                    Color(red: 0.15, green: 0.15, blue: 0.20)
+                                ] : [
+                                    Color(red: 0.1, green: 0.1, blue: 0.12),
+                                    Color(red: 0.08, green: 0.08, blue: 0.10)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .stroke(
+                            Color(red: 0.3, green: 0.3, blue: 0.35).opacity(gameSessionVM.canGoPrevious ? 0.6 : 0.3),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
             }
             .disabled(!gameSessionVM.canGoPrevious)
-            .foregroundColor(gameSessionVM.canGoPrevious ? .blue : .gray)
+            .foregroundColor(gameSessionVM.canGoPrevious ? Color(red: 0.8, green: 0.8, blue: 0.9) : Color(red: 0.4, green: 0.4, blue: 0.5))
             
             // Shuffle button
             Button(action: {
                 Task { await gameSessionVM.shuffleCards() }
             }) {
-                VStack(spacing: 8) {
-                    Image(systemName: "shuffle.circle.fill")
-                        .font(.title2)
+                VStack(spacing: 6) {
+                    Image(systemName: "shuffle")
+                        .font(.system(size: 18, weight: .semibold))
                     Text("Shuffle")
-                        .font(.caption)
+                        .font(.system(size: 11, weight: .medium, design: .default))
                 }
+                .frame(width: 70, height: 50)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(red: 0.13, green: 0.13, blue: 0.15))
+                        .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
-            .foregroundColor(.blue)
+            .foregroundColor(.white)
             
             // Skip button
             Button(action: {
                 Task { await gameSessionVM.nextCard() }
             }) {
-                VStack(spacing: 8) {
-                    Image(systemName: "chevron.right.circle.fill")
-                        .font(.title2)
+                VStack(spacing: 6) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 18, weight: .semibold))
                     Text("Skip")
-                        .font(.caption)
+                        .font(.system(size: 11, weight: .medium, design: .default))
                 }
+                .frame(width: 70, height: 50)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(red: 0.13, green: 0.13, blue: 0.15))
+                        .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
-            .foregroundColor(.blue)
+            .foregroundColor(.white)
         }
     }
     
@@ -235,33 +277,44 @@ private struct SimpleCardView: View {
     
     var body: some View {
         ZStack {
-            // Card background - solid dark blueish green, no transparency
+            // Modern flat card background
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(red: 0.08, green: 0.25, blue: 0.22)) // Dark blueish green - completely opaque
-                .stroke(Color(red: 0.15, green: 0.45, blue: 0.40), lineWidth: 2) // Lighter blueish green stroke
+                .fill(Color(red: 0.13, green: 0.13, blue: 0.15)) // Modern card surface
+                .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1) // Subtle border
                 .frame(width: 320, height: 420)
-                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4) // Clean subtle shadow
             
             // Card content
             VStack(spacing: 20) {
                 Spacer()
                 
-                // Main prompt
+                // Clean modern text
                 Text(card.prompt)
-                    .font(.title2)
-                    .fontWeight(.medium)
+                    .font(.system(size: 20, weight: .medium, design: .default))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 30)
+                    .padding(.horizontal, 32)
+                    .lineSpacing(4)
                 
                 Spacer()
                 
-                // Swipe hint for top card
+                // Clean swipe hint
                 if isTopCard {
-                    Text("Swipe to continue")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                        .padding(.bottom, 20)
+                    HStack(spacing: 6) {
+                        Image(systemName: "hand.draw")
+                            .font(.caption2)
+                        Text("Swipe to continue")
+                            .font(.system(size: 12, weight: .medium, design: .default))
+                    }
+                    .foregroundColor(Color(red: 0.6, green: 0.6, blue: 0.7))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color(red: 0.08, green: 0.08, blue: 0.10))
+                            .stroke(Color(red: 0.15, green: 0.15, blue: 0.18), lineWidth: 1)
+                    )
+                    .padding(.bottom, 20)
                 }
             }
             .frame(width: 320, height: 420)
@@ -278,24 +331,35 @@ private struct ErrorView: View {
     let onRetry: () -> Void
     
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 50))
-                .foregroundColor(.orange)
+        VStack(spacing: 24) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 56, weight: .medium))
+                .foregroundColor(Color(red: 1.0, green: 0.58, blue: 0.0))
             
             Text("Oops!")
-                .font(.title)
-                .fontWeight(.bold)
+                .font(.system(size: 28, weight: .bold, design: .default))
+                .foregroundColor(.white)
             
             Text(message)
-                .font(.body)
+                .font(.system(size: 16, weight: .medium, design: .default))
                 .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.8))
+                .lineSpacing(2)
             
-            Button("Try Again", action: onRetry)
-                .buttonStyle(.borderedProminent)
+            Button(action: onRetry) {
+                Text("Try Again")
+                    .font(.system(size: 16, weight: .semibold, design: .default))
+                    .foregroundColor(.white)
+                    .frame(width: 120, height: 44)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(red: 0.13, green: 0.13, blue: 0.15))
+                            .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+            }
         }
-        .padding()
+        .padding(32)
     }
 }
 
@@ -304,29 +368,49 @@ private struct CompletionView: View {
     let onDismiss: () -> Void
     
     var body: some View {
-        VStack(spacing: 30) {
+        VStack(spacing: 32) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 80))
-                .foregroundColor(.green)
+                .font(.system(size: 88, weight: .medium))
+                .foregroundColor(Color(red: 0.2, green: 0.78, blue: 0.35))
             
             Text("Great Job!")
-                .font(.title)
-                .fontWeight(.bold)
+                .font(.system(size: 32, weight: .bold, design: .default))
+                .foregroundColor(.white)
             
             Text("You've completed all the cards in this category!")
-                .font(.body)
+                .font(.system(size: 16, weight: .medium, design: .default))
                 .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.8))
+                .lineSpacing(2)
+                .padding(.horizontal, 20)
             
-            VStack(spacing: 15) {
-                Button("Play Again", action: onPlayAgain)
-                    .buttonStyle(.borderedProminent)
+            VStack(spacing: 16) {
+                Button(action: onPlayAgain) {
+                    Text("Play Again")
+                        .font(.system(size: 16, weight: .semibold, design: .default))
+                        .foregroundColor(.white)
+                        .frame(width: 160, height: 48)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(red: 0.13, green: 0.13, blue: 0.15))
+                                .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                }
                 
-                Button("Choose New Category", action: onDismiss)
-                    .buttonStyle(.bordered)
+                Button(action: onDismiss) {
+                    Text("Choose New Category")
+                        .font(.system(size: 16, weight: .medium, design: .default))
+                        .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.8))
+                        .frame(width: 160, height: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1)
+                        )
+                }
             }
         }
-        .padding()
+        .padding(32)
     }
 }
 
