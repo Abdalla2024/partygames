@@ -8,30 +8,21 @@
 import SwiftUI
 import SwiftData
 
-/// Main game session view that presents swipeable cards and manages game flow
-/// Integrates GameSessionViewModel and CardInteractionViewModel for complete game experience
+/// Main game session view with a clean 4-card stack implementation
 struct GameSessionView: View {
     
     // MARK: - Properties
     
-    /// The game category being played
     let category: GameCategory
-    
-    /// Model context for SwiftData operations
     let modelContext: ModelContext
     
-    /// Session management ViewModel
     @State private var gameSessionVM: GameSessionViewModel
-    
-    /// Card interaction and gesture handling ViewModel
     @State private var cardInteractionVM: CardInteractionViewModel
-    
-    /// Controls sheet presentation
     @Environment(\.dismiss) private var dismiss
     
-    /// Session configuration
-    @State private var showingSettings = false
-    @State private var showingStats = false
+    // Animation state for card stack
+    @State private var swipeOffset: CGSize = .zero
+    @State private var isAnimatingSwipe: Bool = false
     
     // MARK: - Initialization
     
@@ -48,548 +39,314 @@ struct GameSessionView: View {
         NavigationStack {
             ZStack {
                 // Background
-                backgroundGradient
-                    .ignoresSafeArea()
+                LinearGradient(
+                    colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
                 
-                // Main content
-                VStack(spacing: 0) {
-                    // Session header
-                    sessionHeader
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-                    
-                    // Progress bar
-                    progressBar
-                        .padding(.horizontal)
-                        .padding(.vertical, 12)
-                    
-                    // Card area
-                    Spacer()
-                    
-                    cardArea
+                VStack(spacing: 40) {
+                    // Game title
+                    Text(category.name)
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
                     
                     Spacer()
                     
-                    // Session controls
-                    sessionControls
-                        .padding(.horizontal)
-                        .padding(.bottom, 20)
-                }
-            }
-            .navigationTitle(category.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: pauseSession) {
-                        Image(systemName: gameSessionVM.isSessionPaused ? "play.fill" : "pause.fill")
+                    // Card Stack
+                    if gameSessionVM.isLoading {
+                        ProgressView("Loading Cards...")
+                            .scaleEffect(1.2)
+                    } else if let errorMessage = gameSessionVM.errorMessage {
+                        ErrorView(message: errorMessage) {
+                            Task { await initializeSession() }
+                        }
+                    } else if gameSessionVM.isSessionCompleted {
+                        CompletionView {
+                            Task { await gameSessionVM.restartSession() }
+                        } onDismiss: {
+                            dismiss()
+                        }
+                    } else {
+                        cardStack
                     }
+                    
+                    Spacer()
+                    
+                    // Control buttons
+                    controlButtons
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        Button("Session Stats", systemImage: "chart.bar") {
-                            showingStats = true
-                        }
-                        
-                        Button("Settings", systemImage: "gear") {
-                            showingSettings = true
-                        }
-                        
-                        Divider()
-                        
-                        Button("End Session", systemImage: "stop.fill", role: .destructive) {
-                            endSession()
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
+                .padding()
             }
             .task {
                 await initializeSession()
             }
-            .sheet(isPresented: $showingStats) {
-                sessionStatsView
-            }
-            .sheet(isPresented: $showingSettings) {
-                sessionSettingsView
-            }
         }
     }
     
-    // MARK: - Subviews
+    // MARK: - Card Stack
     
-    /// Background gradient for the session
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                Color(.systemGroupedBackground),
-                Color(.systemBackground).opacity(0.8)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
+    private var cardStack: some View {
+        ZStack {
+            let cards = gameSessionVM.stackCards
+            
+            // Render cards from back to front (bottom to top of stack)
+            ForEach(Array(cards.enumerated().reversed()), id: \.element.id) { index, card in
+                SimpleCardView(
+                    card: card,
+                    stackPosition: index,
+                    isTopCard: index == 0,
+                    swipeOffset: index == 0 ? swipeOffset : .zero
+                )
+                .zIndex(Double(cards.count - index))
+                .offset(y: CGFloat(index * 25)) // Stack effect: each card 25pts below previous
+                .scaleEffect(1.0 - (CGFloat(index) * 0.02)) // Slight scale reduction for depth
+                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: gameSessionVM.currentCard?.id)
+                .gesture(
+                    index == 0 ? // Only top card is interactive
+                    DragGesture()
+                        .onChanged(handleDragChanged)
+                        .onEnded(handleDragEnded)
+                    : nil
+                )
+            }
+        }
+        .frame(width: 320, height: 500) // Fixed frame to contain the stack
+    }
+    
+    // MARK: - Control Buttons
+    
+    private var controlButtons: some View {
+        HStack(spacing: 60) {
+            // Previous button
+            Button(action: {
+                Task { await gameSessionVM.previousCard() }
+            }) {
+                VStack(spacing: 8) {
+                    Image(systemName: "chevron.left.circle.fill")
+                        .font(.title2)
+                    Text("Previous")
+                        .font(.caption)
+                }
+            }
+            .disabled(!gameSessionVM.canGoPrevious)
+            .foregroundColor(gameSessionVM.canGoPrevious ? .blue : .gray)
+            
+            // Shuffle button
+            Button(action: {
+                Task { await gameSessionVM.shuffleCards() }
+            }) {
+                VStack(spacing: 8) {
+                    Image(systemName: "shuffle.circle.fill")
+                        .font(.title2)
+                    Text("Shuffle")
+                        .font(.caption)
+                }
+            }
+            .foregroundColor(.blue)
+            
+            // Skip button
+            Button(action: {
+                Task { await gameSessionVM.nextCard() }
+            }) {
+                VStack(spacing: 8) {
+                    Image(systemName: "chevron.right.circle.fill")
+                        .font(.title2)
+                    Text("Skip")
+                        .font(.caption)
+                }
+            }
+            .foregroundColor(.blue)
+        }
+    }
+    
+    // MARK: - Drag Handling
+    
+    private func handleDragChanged(_ value: DragGesture.Value) {
+        guard !isAnimatingSwipe else { return }
+        swipeOffset = value.translation
+    }
+    
+    private func handleDragEnded(_ value: DragGesture.Value) {
+        guard !isAnimatingSwipe else { return }
+        
+        let threshold: CGFloat = 100
+        let velocity = CGSize(
+            width: value.predictedEndLocation.x - value.location.x,
+            height: value.predictedEndLocation.y - value.location.y
         )
-    }
-    
-    /// Session information header
-    private var sessionHeader: some View {
-        VStack(spacing: 6) {
-            Text(gameSessionVM.sessionName)
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            HStack(spacing: 16) {
-                // Card counter
-                HStack(spacing: 4) {
-                    Image(systemName: "rectangle.stack")
-                        .font(.caption)
-                    Text("\(gameSessionVM.currentCardNumber)/\(gameSessionVM.totalCards)")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                }
-                
-                // Session duration
-                if gameSessionVM.isSessionActive {
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock")
-                            .font(.caption)
-                        Text(gameSessionVM.sessionStats.sessionDuration)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
-                }
-                
-                // Completion percentage
-                HStack(spacing: 4) {
-                    Image(systemName: "percent")
-                        .font(.caption)
-                    Text(gameSessionVM.sessionStats.progressPercentage)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                }
-            }
-            .foregroundColor(.secondary)
+        
+        // Check if swipe is strong enough
+        if abs(swipeOffset.width) > threshold || abs(swipeOffset.height) > threshold || 
+           abs(velocity.width) > 500 || abs(velocity.height) > 500 {
+            animateCardExit()
+        } else {
+            animateSnapBack()
         }
     }
     
-    /// Progress bar showing session completion
-    private var progressBar: some View {
-        VStack(spacing: 8) {
-            ProgressView(value: gameSessionVM.sessionProgress)
-                .progressViewStyle(LinearProgressViewStyle(tint: .blue))
-                .scaleEffect(y: 2, anchor: .center)
+    private func animateCardExit() {
+        isAnimatingSwipe = true
+        
+        // Animate card off screen
+        let exitOffset = CGSize(
+            width: swipeOffset.width > 0 ? 500 : -500,
+            height: swipeOffset.height
+        )
+        
+        withAnimation(.easeInOut(duration: 0.4)) {
+            swipeOffset = exitOffset
+        }
+        
+        // Wait and then move to next card
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            Task {
+                await gameSessionVM.nextCard()
+                swipeOffset = .zero
+                isAnimatingSwipe = false
+            }
+        }
+    }
+    
+    private func animateSnapBack() {
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            swipeOffset = .zero
+        }
+    }
+    
+    // MARK: - Initialization
+    
+    @MainActor
+    private func initializeSession() async {
+        await gameSessionVM.startNewSession(for: category)
+        cardInteractionVM.setGameSessionViewModel(gameSessionVM)
+    }
+}
+
+// MARK: - Simple Card View
+
+private struct SimpleCardView: View {
+    let card: GameCard
+    let stackPosition: Int
+    let isTopCard: Bool
+    let swipeOffset: CGSize
+    
+    private var cardColor: Color {
+        let colors: [Color] = [.blue, .green, .orange, .purple]
+        return colors[min(stackPosition, colors.count - 1)]
+    }
+    
+    var body: some View {
+        ZStack {
+            // Card background
+            RoundedRectangle(cornerRadius: 20)
+                .fill(cardColor.opacity(0.8))
+                .stroke(cardColor, lineWidth: 2)
+                .frame(width: 320, height: 420)
+                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
             
-            HStack {
-                Text("Completed: \(gameSessionVM.sessionStats.completedCards)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+            // Card content
+            VStack(spacing: 20) {
+                // Card number indicator
+                HStack {
+                    Text("Card \(card.number)")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.white.opacity(0.8))
+                        .clipShape(Capsule())
+                    Spacer()
+                }
                 
                 Spacer()
                 
-                Text("Remaining: \(gameSessionVM.sessionStats.remainingCards)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                // Main prompt
+                Text(card.prompt)
+                    .font(.title2)
+                    .fontWeight(.medium)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 30)
+                
+                Spacer()
+                
+                // Swipe hint for top card
+                if isTopCard {
+                    Text("Swipe to continue")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                        .padding(.bottom, 20)
+                }
             }
-        }
-    }
-    
-    /// Main card display area
-    private var cardArea: some View {
-        ZStack {
-            if gameSessionVM.isLoading {
-                loadingView
-            } else if let errorMessage = gameSessionVM.errorMessage {
-                errorView(errorMessage)
-            } else if gameSessionVM.isSessionCompleted {
-                completionView
-            } else if let currentCard = gameSessionVM.currentCard {
-                cardStack(currentCard: currentCard)
-            } else {
-                noCardsView
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: 450)
-        .padding(.horizontal, 20)
-    }
-    
-    /// Stack of cards with the current card on top
-    private func cardStack(currentCard: GameCard) -> some View {
-        ZStack {
-            // Background placeholder cards (visual depth without text confusion)
-            ForEach(0..<min(2, gameSessionVM.remainingCards.count), id: \.self) { index in
-                placeholderCard(stackIndex: index)
-            }
-            
-            // Current interactive card
-            GameCardView(
-                card: currentCard,
-                cardInteractionVM: cardInteractionVM,
-                cardSize: CGSize(width: 320, height: 420),
-                isInteractive: true,
-                cardState: .normal
-            )
-        }
-    }
-    
-    /// Create a placeholder card for stack depth without text content
-    private func placeholderCard(stackIndex: Int) -> some View {
-        RoundedRectangle(cornerRadius: 20)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Color.blue.opacity(0.15),
-                        Color.purple.opacity(0.15)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-            )
             .frame(width: 320, height: 420)
-            .offset(x: CGFloat(stackIndex + 1) * 2, y: CGFloat(stackIndex + 1) * 8)
-            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-    
-    /// Loading view while session initializes
-    private var loadingView: some View {
-        VStack(spacing: 20) {
-            ProgressView()
-                .scaleEffect(1.5)
-            
-            Text("Starting Game Session...")
-                .font(.headline)
-                .foregroundColor(.secondary)
         }
+        .offset(swipeOffset)
+        .rotationEffect(.degrees(Double(swipeOffset.width / 20)))
+        .opacity(isTopCard ? 1.0 : 0.8)
     }
+}
+
+// MARK: - Supporting Views
+
+private struct ErrorView: View {
+    let message: String
+    let onRetry: () -> Void
     
-    /// Error view for session errors
-    private func errorView(_ message: String) -> some View {
+    var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 50))
                 .foregroundColor(.orange)
             
-            Text("Session Error")
-                .font(.headline)
+            Text("Oops!")
+                .font(.title)
+                .fontWeight(.bold)
             
             Text(message)
                 .font(.body)
-                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal)
+                .foregroundColor(.secondary)
             
-            Button("Retry") {
-                Task {
-                    await retrySession()
-                }
-            }
-            .buttonStyle(.borderedProminent)
+            Button("Try Again", action: onRetry)
+                .buttonStyle(.borderedProminent)
         }
+        .padding()
     }
+}
+
+private struct CompletionView: View {
+    let onPlayAgain: () -> Void
+    let onDismiss: () -> Void
     
-    /// Completion view when all cards are done
-    private var completionView: some View {
-        VStack(spacing: 24) {
+    var body: some View {
+        VStack(spacing: 30) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 80))
                 .foregroundColor(.green)
             
-            Text("Session Complete!")
+            Text("Great Job!")
                 .font(.title)
                 .fontWeight(.bold)
             
-            Text("You completed all \(gameSessionVM.totalCards) cards in \(gameSessionVM.sessionStats.sessionDuration)")
-                .font(.headline)
-                .foregroundColor(.secondary)
+            Text("You've completed all the cards in this category!")
+                .font(.body)
                 .multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
             
-            VStack(spacing: 12) {
-                Button("Play Again") {
-                    Task {
-                        await restartSession()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
+            VStack(spacing: 15) {
+                Button("Play Again", action: onPlayAgain)
+                    .buttonStyle(.borderedProminent)
                 
-                Button("Choose Different Category") {
-                    dismiss()
-                }
-                .buttonStyle(.bordered)
+                Button("Choose New Category", action: onDismiss)
+                    .buttonStyle(.bordered)
             }
         }
         .padding()
     }
-    
-    /// No cards available view
-    private var noCardsView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "rectangle.stack")
-                .font(.system(size: 50))
-                .foregroundColor(.secondary)
-            
-            Text("No Cards Available")
-                .font(.headline)
-            
-            Text("This category doesn't have any cards to play.")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
-            Button("Choose Different Category") {
-                dismiss()
-            }
-            .buttonStyle(.borderedProminent)
-        }
-    }
-    
-    /// Session control buttons
-    private var sessionControls: some View {
-        HStack(spacing: 20) {
-            // Previous card
-            Button(action: previousCard) {
-                VStack(spacing: 4) {
-                    Image(systemName: "chevron.left.circle")
-                        .font(.title2)
-                    Text("Previous")
-                        .font(.caption2)
-                }
-            }
-            .disabled(!gameSessionVM.canGoPrevious)
-            
-            Spacer()
-            
-            // Skip card
-            Button(action: skipCard) {
-                VStack(spacing: 4) {
-                    Image(systemName: "forward.fill")
-                        .font(.title2)
-                    Text("Skip")
-                        .font(.caption2)
-                }
-            }
-            .disabled(gameSessionVM.isSessionCompleted)
-            
-            // Next card
-            Button(action: nextCard) {
-                VStack(spacing: 4) {
-                    Image(systemName: "chevron.right.circle")
-                        .font(.title2)
-                    Text("Next")
-                        .font(.caption2)
-                }
-            }
-            .disabled(!gameSessionVM.canGoNext)
-            
-            Spacer()
-            
-            // Shuffle
-            Button(action: {
-                Task {
-                    await shuffleCards()
-                }
-            }) {
-                VStack(spacing: 4) {
-                    Image(systemName: "shuffle")
-                        .font(.title2)
-                    Text("Shuffle")
-                        .font(.caption2)
-                }
-            }
-            .disabled(gameSessionVM.isLoading)
-        }
-        .foregroundColor(.blue)
-    }
-    
-    /// Session statistics sheet
-    private var sessionStatsView: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                VStack(spacing: 16) {
-                    StatRow(title: "Total Cards", value: "\(gameSessionVM.sessionStats.totalCards)")
-                    StatRow(title: "Completed", value: "\(gameSessionVM.sessionStats.completedCards)")
-                    StatRow(title: "Remaining", value: "\(gameSessionVM.sessionStats.remainingCards)")
-                    StatRow(title: "Progress", value: gameSessionVM.sessionStats.progressPercentage)
-                    StatRow(title: "Duration", value: gameSessionVM.sessionStats.sessionDuration)
-                    StatRow(title: "Players", value: "\(gameSessionVM.sessionStats.playerCount)")
-                    StatRow(title: "Shuffled", value: gameSessionVM.sessionStats.isShuffled ? "Yes" : "No")
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Session Stats")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showingStats = false
-                    }
-                }
-            }
-        }
-    }
-    
-    /// Session settings sheet
-    private var sessionSettingsView: some View {
-        NavigationStack {
-            Form {
-                Section("Session Actions") {
-                    Button("Restart Session") {
-                        showingSettings = false
-                        Task {
-                            await restartSession()
-                        }
-                    }
-                    
-                    Button("Shuffle Cards") {
-                        showingSettings = false
-                        Task {
-                            await shuffleCards()
-                        }
-                    }
-                }
-                
-                Section("Session Info") {
-                    HStack {
-                        Text("Category")
-                        Spacer()
-                        Text(category.name)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Total Cards")
-                        Spacer()
-                        Text("\(gameSessionVM.totalCards)")
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Started")
-                        Spacer()
-                        if let startDate = gameSessionVM.sessionStats.startDate {
-                            Text(startDate.formatted(date: .omitted, time: .shortened))
-                                .foregroundColor(.secondary)
-                        } else {
-                            Text("Unknown")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        showingSettings = false
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Actions
-    
-    /// Initialize the game session
-    @MainActor
-    private func initializeSession() async {
-        await gameSessionVM.startNewSession(for: category)
-        
-        // Connect card interaction to session progression
-        cardInteractionVM.setGameSessionViewModel(gameSessionVM)
-    }
-    
-    /// Pause or resume session
-    @MainActor
-    private func pauseSession() {
-        Task {
-            if gameSessionVM.isSessionPaused {
-                await gameSessionVM.resumeSession()
-            } else {
-                await gameSessionVM.pauseSession()
-            }
-        }
-    }
-    
-    /// End the current session
-    @MainActor
-    private func endSession() {
-        Task {
-            await gameSessionVM.endCurrentSession()
-            dismiss()
-        }
-    }
-    
-    /// Restart the session
-    @MainActor
-    private func restartSession() async {
-        await gameSessionVM.restartSession()
-    }
-    
-    /// Retry session initialization
-    @MainActor
-    private func retrySession() async {
-        await gameSessionVM.startNewSession(for: category)
-    }
-    
-    /// Move to next card
-    @MainActor
-    private func nextCard() {
-        Task {
-            await gameSessionVM.nextCard()
-        }
-    }
-    
-    /// Move to previous card
-    @MainActor
-    private func previousCard() {
-        Task {
-            await gameSessionVM.previousCard()
-        }
-    }
-    
-    /// Skip current card
-    @MainActor
-    private func skipCard() {
-        Task {
-            await gameSessionVM.nextCard()
-        }
-    }
-    
-    /// Shuffle the cards
-    @MainActor
-    private func shuffleCards() async {
-        await gameSessionVM.shuffleCards()
-    }
 }
-
-// MARK: - Helper Views
-
-/// Statistic row for the stats view
-struct StatRow: View {
-    let title: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.subheadline)
-            Spacer()
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.blue)
-        }
-    }
-}
-
 
 // MARK: - Previews
 

@@ -411,7 +411,12 @@ final class GameSessionViewModel {
         
         // Get current card based on session's current index
         let actualIndex = session.getActualCardIndex()
-        currentCard = actualIndex < allCards.count ? allCards[actualIndex] : nil
+        let newCard = actualIndex < allCards.count ? allCards[actualIndex] : nil
+        
+        // Debug: Print card progression
+        print("GameSessionViewModel: Updating to card at index \(actualIndex), card number: \(newCard?.number ?? -1)")
+        
+        currentCard = newCard
         
         // Calculate completed and remaining cards
         completedCards = allCards.filter { session.completedCardIds.contains($0.id) }
@@ -506,6 +511,25 @@ final class GameSessionViewModel {
     /// Whether all cards have been completed
     var isSessionCompleted: Bool {
         currentSession?.isCompleted ?? false
+    }
+    
+    /// Get the next 4 cards to display in the stack (including current card)
+    var stackCards: [GameCard] {
+        guard let session = currentSession,
+              let category = session.category else {
+            return []
+        }
+        
+        let allCards = category.cards.sorted { $0.number < $1.number }
+        let currentIndex = session.getActualCardIndex()
+        
+        // Get up to 4 cards starting from current position
+        let endIndex = min(currentIndex + 4, allCards.count)
+        let startIndex = max(0, currentIndex)
+        
+        guard startIndex < allCards.count else { return [] }
+        
+        return Array(allCards[startIndex..<endIndex])
     }
     
     // MARK: - Validation
