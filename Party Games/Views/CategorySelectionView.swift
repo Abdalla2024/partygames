@@ -20,8 +20,20 @@ struct CategorySelectionView: View {
     /// ViewModel for managing category data and state
     @State private var categoriesViewModel: GameCategoriesViewModel
     
+    /// StoreKit manager for premium purchases
+    @State private var storeKitManager = StoreKitManager()
+    
+    /// User preferences for premium status
+    @State private var userPreferences: UserPreferences?
+    
     /// Search text for filtering categories
     @State private var searchText = ""
+    
+    /// Paywall presentation state
+    @State private var showingPaywall = false
+    
+    /// Selected premium category (when paywall is shown)
+    @State private var selectedPremiumCategory: GameCategory?
     
     // MARK: - Initialization
     
@@ -39,9 +51,22 @@ struct CategorySelectionView: View {
                 .searchable(text: $searchText, prompt: "Search categories...")
                 .task {
                     await loadInitialData()
+                    loadUserPreferences()
                 }
                 .refreshable {
                     await refreshData()
+                }
+                .sheet(isPresented: $showingPaywall) {
+                    PaywallView(
+                        storeKitManager: storeKitManager,
+                        onPurchaseComplete: {
+                            handlePurchaseComplete()
+                        },
+                        onDismiss: {
+                            showingPaywall = false
+                            selectedPremiumCategory = nil
+                        }
+                    )
                 }
         }
     }
@@ -67,13 +92,28 @@ struct CategorySelectionView: View {
         ScrollView {
             LazyVGrid(columns: gridColumns, spacing: 20) {
                 ForEach(filteredCategories) { category in
-                    NavigationLink(destination: GameSessionView(category: category, modelContext: modelContext)) {
-                        CategoryCardView(
-                            category: category,
-                            onTap: { }
-                        )
+                    if category.isPremium && !hasPremiumAccess {
+                        // Premium category - show paywall
+                        Button(action: {
+                            selectedPremiumCategory = category
+                            showingPaywall = true
+                        }) {
+                            CategoryCardView(
+                                category: category,
+                                onTap: { }
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        // Free category or user has premium - navigate to game
+                        NavigationLink(destination: GameSessionView(category: category, modelContext: modelContext)) {
+                            CategoryCardView(
+                                category: category,
+                                onTap: { }
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding()
@@ -162,6 +202,12 @@ struct CategorySelectionView: View {
         .padding()
     }
     
+    // MARK: - Computed Properties
+    
+    private var hasPremiumAccess: Bool {
+        return userPreferences?.isSubscriptionValid ?? false || storeKitManager.hasPremiumAccess
+    }
+    
     // MARK: - Actions
     
     private func loadInitialData() async {
@@ -170,6 +216,32 @@ struct CategorySelectionView: View {
     
     private func refreshData() async {
         await categoriesViewModel.refresh()
+    }
+    
+    private func loadUserPreferences() {
+        userPreferences = UserPreferences.getCurrentPreferences(from: modelContext)
+    }
+    
+    private func handlePurchaseComplete() {
+        // Update user preferences with new premium status
+        if let userPreferences = userPreferences {
+            storeKitManager.updateUserPreferences(userPreferences)
+            
+            do {
+                try modelContext.save()
+            } catch {
+                print("Error saving user preferences after purchase: \(error)")
+            }
+        }
+        
+        // Dismiss paywall
+        showingPaywall = false
+        
+        // Navigate to the selected premium category if one was selected
+        if let category = selectedPremiumCategory {
+            selectedPremiumCategory = nil
+            // The navigation will now work since user has premium access
+        }
     }
 }
 
@@ -180,47 +252,80 @@ struct CategoryCardView: View {
     let onTap: () -> Void
     
     var body: some View {
-        VStack(spacing: 12) {
-            // Category Icon
-            AsyncImage(url: nil) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } placeholder: {
-                Image(category.iconName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            }
-            .frame(width: 60, height: 60)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-            
-            VStack(spacing: 4) {
-                // Category Name
-                Text(category.name)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
+        ZStack {
+            VStack(spacing: 12) {
+                // Category Icon
+                AsyncImage(url: nil) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } placeholder: {
+                    Image(category.iconName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                }
+                .frame(width: 60, height: 60)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                 
-                // Card Count
-                Text("\(category.cards.count) cards")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                VStack(spacing: 4) {
+                    // Category Name
+                    Text(category.name)
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                    
+                    // Card Count
+                    Text("\(category.cards.count) cards")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(16)
+            .frame(height: 160)
+            .frame(maxWidth: .infinity)
+            .background(Color(UIColor.systemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(UIColor.separator), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            
+            // Premium Crown Badge
+            if category.isPremium {
+                VStack {
+                    HStack {
+                        Spacer()
+                        
+                        ZStack {
+                            Circle()
+                                .fill(Color.black)
+                                .frame(width: 28, height: 28)
+                            
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 1.0, green: 0.84, blue: 0.0),  // Gold
+                                            Color(red: 1.0, green: 0.72, blue: 0.0)   // Darker gold
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .shadow(color: Color(red: 1.0, green: 0.84, blue: 0.0).opacity(0.4), radius: 4, x: 0, y: 2)
+                        .offset(x: -4, y: 4)
+                    }
+                    Spacer()
+                }
             }
         }
-        .padding(16)
-        .frame(height: 160)
-        .frame(maxWidth: .infinity)
-        .background(Color(UIColor.systemBackground))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(UIColor.separator), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         .accessibilityLabel(category.name)
         .accessibilityValue("\(category.cards.count) cards available")
-        .accessibilityHint("Double tap to start playing")
+        .accessibilityHint(category.isPremium ? "Premium content - Double tap to upgrade" : "Double tap to start playing")
         .accessibilityAddTraits(.isButton)
     }
 }

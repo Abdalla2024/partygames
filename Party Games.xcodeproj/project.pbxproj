@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2FC20F0E2E47D7E3004A6EC3 /* partygamestorekit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 2FC20F0D2E47D7E3004A6EC3 /* partygamestorekit.storekit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2FC20E202E451B43004A6EC3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		2FC20E0F2E451B41004A6EC3 /* Party Games.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Party Games.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FC20E1F2E451B43004A6EC3 /* Party GamesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Party GamesTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FC20E292E451B43004A6EC3 /* Party GamesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Party GamesUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2FC20F0D2E47D7E3004A6EC3 /* partygamestorekit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = partygamestorekit.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		2FC20E062E451B41004A6EC3 = {
 			isa = PBXGroup;
 			children = (
+				2FC20F0D2E47D7E3004A6EC3 /* partygamestorekit.storekit */,
 				2FC20E112E451B41004A6EC3 /* Party Games */,
 				2FC20E222E451B43004A6EC3 /* Party GamesTests */,
 				2FC20E2C2E451B43004A6EC3 /* Party GamesUITests */,
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2FC20F0E2E47D7E3004A6EC3 /* partygamestorekit.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
