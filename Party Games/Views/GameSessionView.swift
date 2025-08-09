@@ -42,19 +42,19 @@ struct GameSessionView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 40) {
-                // Title with game icon - smaller and with top padding
-                HStack(spacing: 12) {
-                    Image(category.iconName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 32, height: 32)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    
-                    Text(category.name)
-                        .font(.system(size: 22, weight: .semibold, design: .default))
-                        .foregroundColor(.white)
-                }
-                .padding(.top, 20)
+                // Title with game icon - proper spacing from top
+//                HStack(spacing: 12) {
+//                    Image(category.iconName)
+//                        .resizable()
+//                        .aspectRatio(contentMode: .fit)
+//                        .frame(width: 32, height: 32)
+//                        .clipShape(RoundedRectangle(cornerRadius: 8))
+//                    
+//                    Text(category.name)
+//                        .font(.system(size: 22, weight: .semibold, design: .default))
+//                        .foregroundColor(.white)
+//                }
+//                .padding(.top, 44) // Apple guidelines: 44pt from top for content under navigation
                 
                 Spacer()
                 
@@ -89,10 +89,27 @@ struct GameSessionView: View {
                 
                 Spacer()
                 
-                // Control buttons
+                // Control buttons with proper bottom spacing
                 controlButtons
+                    .padding(.bottom, 44) // Apple guidelines: 34pt from bottom for safe area content
             }
-            .padding()
+            .padding(.horizontal)
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    dismiss()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .medium))
+                        Text("Back")
+                            .font(.system(size: 17, weight: .regular))
+                    }
+                    .foregroundColor(.white)
+                }
+            }
         }
         .task {
             await initializeSession()
@@ -132,68 +149,92 @@ struct GameSessionView: View {
     // MARK: - Control Buttons
     
     private var controlButtons: some View {
-        HStack(spacing: 40) {
-            // Previous button
-            Button(action: {
-                Task { await gameSessionVM.previousCard() }
-            }) {
+        HStack(spacing: 22) {
+            // Palette (matches the card without over-saturating the bar)
+            let surface          = Color(red: 0.10, green: 0.12, blue: 0.13)   // charcoal
+            let surfaceDisabled  = Color(red: 0.08, green: 0.09, blue: 0.10)
+            let stroke           = Color(red: 0.16, green: 0.18, blue: 0.20)   // muted slate
+            let strokeDisabled   = Color(red: 0.12, green: 0.13, blue: 0.15)
+            let accentTeal       = Color(red: 0.118, green: 0.890, blue: 0.824) // #1EE3D2
+            let labelPrimary     = Color.white.opacity(0.92)
+            let labelSecondary   = Color.white.opacity(0.55)
+
+            // Previous
+            Button(action: { Task { await gameSessionVM.previousCard() } }) {
                 VStack(spacing: 6) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(gameSessionVM.canGoPrevious ? labelPrimary : labelSecondary)
                     Text("Previous")
-                        .font(.system(size: 11, weight: .medium, design: .default))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(gameSessionVM.canGoPrevious ? labelPrimary : labelSecondary)
                 }
-                .frame(width: 70, height: 50)
+                .frame(width: 84, height: 56)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(gameSessionVM.canGoPrevious ? Color(red: 0.13, green: 0.13, blue: 0.15) : Color(red: 0.08, green: 0.08, blue: 0.10))
-                        .stroke(gameSessionVM.canGoPrevious ? Color(red: 0.19, green: 0.19, blue: 0.22) : Color(red: 0.12, green: 0.12, blue: 0.14), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(LinearGradient(colors: [
+                            surface.opacity(0.98), surface.opacity(0.95)
+                        ], startPoint: .top, endPoint: .bottom))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(gameSessionVM.canGoPrevious ? stroke : strokeDisabled, lineWidth: 1)
+                        )
                 )
-                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                .shadow(color: .black.opacity(0.35), radius: 12, x: 0, y: 8)
             }
             .disabled(!gameSessionVM.canGoPrevious)
-            .foregroundColor(gameSessionVM.canGoPrevious ? .white : Color(red: 0.4, green: 0.4, blue: 0.5))
-            
-            // Shuffle button
-            Button(action: {
-                Task { await gameSessionVM.shuffleCards() }
-            }) {
+
+            // Shuffle (make this the accented control)
+            Button(action: { Task { await gameSessionVM.shuffleCards() } }) {
                 VStack(spacing: 6) {
                     Image(systemName: "shuffle")
                         .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(accentTeal)
                     Text("Shuffle")
-                        .font(.system(size: 11, weight: .medium, design: .default))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(accentTeal.opacity(0.95))
                 }
-                .frame(width: 70, height: 50)
+                .frame(width: 96, height: 56)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(red: 0.13, green: 0.13, blue: 0.15))
-                        .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(LinearGradient(colors: [
+                            surface.opacity(0.98), surface.opacity(0.95)
+                        ], startPoint: .top, endPoint: .bottom))
+                        .overlay(
+                            // subtle teal edge to echo the card rim
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(accentTeal.opacity(0.35), lineWidth: 1)
+                        )
                 )
-                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                .shadow(color: accentTeal.opacity(0.25), radius: 16, x: 0, y: 10)
+                .shadow(color: .black.opacity(0.45), radius: 14, x: 0, y: 10)
             }
-            .foregroundColor(.white)
-            
-            // Skip button
-            Button(action: {
-                Task { await gameSessionVM.nextCard() }
-            }) {
+
+            // Skip
+            Button(action: { Task { await gameSessionVM.nextCard() } }) {
                 VStack(spacing: 6) {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(labelPrimary)
                     Text("Skip")
-                        .font(.system(size: 11, weight: .medium, design: .default))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(labelPrimary)
                 }
-                .frame(width: 70, height: 50)
+                .frame(width: 84, height: 56)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(red: 0.13, green: 0.13, blue: 0.15))
-                        .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(LinearGradient(colors: [
+                            surface.opacity(0.98), surface.opacity(0.95)
+                        ], startPoint: .top, endPoint: .bottom))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(stroke, lineWidth: 1)
+                        )
                 )
-                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                .shadow(color: .black.opacity(0.35), radius: 12, x: 0, y: 8)
             }
-            .foregroundColor(.white)
         }
+
     }
     
     // MARK: - Drag Handling
@@ -270,11 +311,27 @@ private struct SimpleCardView: View {
     var body: some View {
         ZStack {
             // Modern flat card background
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(red: 0.13, green: 0.13, blue: 0.15)) // Modern card surface
-                .stroke(Color(red: 0.19, green: 0.19, blue: 0.22), lineWidth: 1) // Subtle border
-                .frame(width: 320, height: 420)
-                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4) // Clean subtle shadow
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                // Teal surface (like the mockup)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.055, green: 0.247, blue: 0.255), // #0E3F41 (top)
+                            Color(red: 0.039, green: 0.373, blue: 0.349)  // #0A5F59 (bottom)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                // Cyan/teal edge highlight
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(Color(red: 0.118, green: 0.890, blue: 0.824).opacity(0.45), lineWidth: 2) // #1EE3D2 @ 45%
+                )
+                // Soft outer glow + lift
+                .shadow(color: Color(red: 0.118, green: 0.890, blue: 0.824).opacity(0.10), radius: 12, x: 0, y: 12)
+                .shadow(color: .black.opacity(0.30), radius: 14, x: 0, y: 20)
+                .frame(width: 320, height: 460)
             
             // Card content
             VStack(spacing: 20) {
