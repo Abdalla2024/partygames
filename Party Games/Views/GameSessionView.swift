@@ -233,34 +233,17 @@ private struct SimpleCardView: View {
     let isTopCard: Bool
     let swipeOffset: CGSize
     
-    private var cardColor: Color {
-        let colors: [Color] = [.blue, .green, .orange, .purple]
-        return colors[min(stackPosition, colors.count - 1)]
-    }
-    
     var body: some View {
         ZStack {
-            // Card background
+            // Card background - solid dark blueish green, no transparency
             RoundedRectangle(cornerRadius: 20)
-                .fill(cardColor.opacity(0.8))
-                .stroke(cardColor, lineWidth: 2)
+                .fill(Color(red: 0.08, green: 0.25, blue: 0.22)) // Dark blueish green - completely opaque
+                .stroke(Color(red: 0.15, green: 0.45, blue: 0.40), lineWidth: 2) // Lighter blueish green stroke
                 .frame(width: 320, height: 420)
                 .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
             
             // Card content
             VStack(spacing: 20) {
-                // Card number indicator
-                HStack {
-                    Text("Card \(card.number)")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.8))
-                        .clipShape(Capsule())
-                    Spacer()
-                }
-                
                 Spacer()
                 
                 // Main prompt
@@ -285,7 +268,6 @@ private struct SimpleCardView: View {
         }
         .offset(swipeOffset)
         .rotationEffect(.degrees(Double(swipeOffset.width / 20)))
-        .opacity(isTopCard ? 1.0 : 0.8)
     }
 }
 
