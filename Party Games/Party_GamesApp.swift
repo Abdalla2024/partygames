@@ -15,6 +15,7 @@ struct Party_GamesApp: App {
             GameCategory.self,
             GameCard.self,
             GameSession.self,
+            UserPreferences.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

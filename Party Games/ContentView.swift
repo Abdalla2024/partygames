@@ -8,21 +8,72 @@
 import SwiftUI
 import SwiftData
 
-/// Main content view that hosts the primary navigation for the Party Games app
-/// Integrates CategorySelectionView with proper SwiftData and ViewModel setup
+/// Main content view that coordinates onboarding, paywall, and app navigation
+/// Handles the complete user flow: onboarding → paywall → main app
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    
+    // Initialization state
     @State private var isInitializing = true
     @State private var initializationError: Error?
     @State private var showingError = false
     
+    // App flow state  
+    @State private var userPreferences: UserPreferences?
+    @State private var storeKitManager = StoreKitManager()
+    @State private var showingOnboarding = false
+    @State private var showingPaywall = false
+    @State private var hasUserDismissedPaywall = false
+    
+    // Current flow step
+    private enum FlowStep {
+        case initializing
+        case onboarding
+        case paywall
+        case mainApp
+        case error
+    }
+    
+    private var currentStep: FlowStep {
+        if isInitializing {
+            return .initializing
+        } else if initializationError != nil {
+            return .error
+        } else if let preferences = userPreferences {
+            if !preferences.hasSeenOnboarding {
+                return .onboarding
+            } else if !preferences.isSubscriptionValid && !storeKitManager.hasPremiumAccess && !hasUserDismissedPaywall {
+                return .paywall
+            } else {
+                return .mainApp
+            }
+        } else {
+            return .onboarding
+        }
+    }
+    
     var body: some View {
         Group {
-            if isInitializing {
+            switch currentStep {
+            case .initializing:
                 initializationView
-            } else if let error = initializationError {
-                errorView(error)
-            } else {
+            case .error:
+                errorView(initializationError!)
+            case .onboarding:
+                OnboardingView {
+                    handleOnboardingComplete()
+                }
+            case .paywall:
+                PaywallView(
+                    storeKitManager: storeKitManager,
+                    onPurchaseComplete: {
+                        handlePaywallComplete()
+                    },
+                    onDismiss: {
+                        handlePaywallDismiss()
+                    }
+                )
+            case .mainApp:
                 CategorySelectionView(modelContext: modelContext)
             }
         }
@@ -120,8 +171,14 @@ struct ContentView: View {
             // Initialize game data if needed (first launch)
             try await initializeGameDataIfNeeded()
             
+            // Update premium status for categories
+            try updatePremiumCategoriesIfNeeded()
+            
             // Validate data integrity
             try validateGameData()
+            
+            // Load user preferences
+            loadUserPreferences()
             
             // Initialization complete
             isInitializing = false
@@ -175,6 +232,62 @@ struct ContentView: View {
         }
         
         print("Validated game data: \(categories.count) categories, \(categories.reduce(0) { $0 + $1.actualCardCount }) total cards")
+    }
+    
+    /// Update premium status for categories based on predefined list
+    private func updatePremiumCategoriesIfNeeded() throws {
+        let categories = try GameDataManager.getAllCategories(modelContext: modelContext)
+        var hasChanges = false
+        
+        for category in categories {
+            let shouldBePremium = GameCategory.shouldBePremium(category.name)
+            if category.isPremium != shouldBePremium {
+                category.isPremium = shouldBePremium
+                hasChanges = true
+            }
+        }
+        
+        if hasChanges {
+            try modelContext.save()
+            print("Updated premium status for categories")
+        }
+    }
+    
+    /// Load user preferences
+    private func loadUserPreferences() {
+        userPreferences = UserPreferences.getCurrentPreferences(from: modelContext)
+    }
+    
+    /// Handle onboarding completion
+    private func handleOnboardingComplete() {
+        userPreferences?.completeOnboarding()
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error saving onboarding completion: \(error)")
+        }
+    }
+    
+    /// Handle paywall completion (purchase success)
+    private func handlePaywallComplete() {
+        // Update user preferences with premium status
+        if let userPreferences = userPreferences {
+            storeKitManager.updateUserPreferences(userPreferences)
+            
+            do {
+                try modelContext.save()
+            } catch {
+                print("Error saving premium status: \(error)")
+            }
+        }
+    }
+    
+    /// Handle paywall dismissal (user closes without purchase)
+    private func handlePaywallDismiss() {
+        // Set flag to allow user to bypass paywall and access free content
+        hasUserDismissedPaywall = true
+        print("Paywall dismissed - continuing to main app with free content access")
     }
 }
 

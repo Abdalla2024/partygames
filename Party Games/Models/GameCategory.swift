@@ -28,6 +28,9 @@ final class GameCategory {
     /// Whether this category is currently active/available
     var isActive: Bool
     
+    /// Whether this category requires premium subscription
+    var isPremium: Bool
+    
     /// Relationship to game cards
     @Relationship(deleteRule: .cascade, inverse: \GameCard.category)
     var cards: [GameCard] = []
@@ -36,13 +39,14 @@ final class GameCategory {
     @Relationship(deleteRule: .cascade, inverse: \GameSession.category)
     var sessions: [GameSession] = []
     
-    init(name: String, iconName: String, cardCount: Int = 0) {
+    init(name: String, iconName: String, cardCount: Int = 0, isPremium: Bool = false) {
         self.id = UUID()
         self.name = name
         self.iconName = iconName
         self.cardCount = cardCount
         self.createdAt = Date()
         self.isActive = true
+        self.isPremium = isPremium
     }
     
     /// Computed property to get actual card count from relationship
@@ -112,5 +116,27 @@ extension GameCategory {
         }
         
         return errors
+    }
+}
+
+// MARK: - Premium Category Configuration
+extension GameCategory {
+    /// Categories that require premium subscription
+    static let premiumCategoryNames: Set<String> = [
+        "Truth or Dare",
+        "Would You Rather", 
+        "Never Have I Ever",
+        "How Well Do You Know Me",
+        "This or That"
+    ]
+    
+    /// Check if a category name should be premium
+    static func shouldBePremium(_ categoryName: String) -> Bool {
+        return premiumCategoryNames.contains(categoryName)
+    }
+    
+    /// Update premium status based on category name
+    func updatePremiumStatus() {
+        self.isPremium = GameCategory.shouldBePremium(self.name)
     }
 }
