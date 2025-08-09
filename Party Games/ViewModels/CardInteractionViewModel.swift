@@ -213,16 +213,13 @@ final class CardInteractionViewModel {
             cardRotation = exitRotation
         }
         
-        // Wait for half the animation to complete before processing
-        try? await Task.sleep(nanoseconds: UInt64(exitAnimationDuration * 0.5 * 1_000_000_000))
+        // Wait for exit animation to complete
+        try? await Task.sleep(nanoseconds: UInt64(exitAnimationDuration * 1_000_000_000))
         
-        // Process the swipe action
+        // Process the swipe action (update to next card)
         await processSwipeAction(direction: direction)
         
-        // Complete the exit animation
-        try? await Task.sleep(nanoseconds: UInt64(exitAnimationDuration * 0.5 * 1_000_000_000))
-        
-        // Reset and reveal next card
+        // Reset and reveal next card immediately after card data updates
         await resetForNextCardWithReveal()
     }
     
@@ -259,16 +256,14 @@ final class CardInteractionViewModel {
     /// Enhanced reset with smooth reveal animation for next card
     @MainActor
     private func resetForNextCardWithReveal() async {
-        // Start with card positioned below (as if sliding up from stack)
-        cardOffset = CGSize(width: 0, height: 50)
+        // Immediately reset to starting position for new card
+        cardOffset = .zero
         cardRotation = 0.0
+        showNextCard = false
+        nextCardScale = 1.0
         
-        // Animate card sliding up into position with spring animation
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.9, blendDuration: 0.1)) {
-            cardOffset = .zero
-            showNextCard = false
-            nextCardScale = 1.0
-        }
+        // Add slight delay to allow SwiftUI view to update with new card data
+        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
         
         isAnimating = false
     }
@@ -280,6 +275,8 @@ final class CardInteractionViewModel {
     @MainActor
     private func processSwipeAction(direction: SwipeDirection) async {
         guard let sessionVM = gameSessionViewModel else { return }
+        
+        print("CardInteractionViewModel: Processing swipe action: \(direction.description)")
         
         switch direction {
         case .right:

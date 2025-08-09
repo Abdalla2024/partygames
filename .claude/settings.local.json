@@ -13,7 +13,12 @@
       "mcp__XcodeBuildMCP__build_run_sim_name_proj",
       "mcp__XcodeBuildMCP__tap",
       "mcp__XcodeBuildMCP__screenshot",
-      "mcp__XcodeBuildMCP__swipe"
+      "mcp__XcodeBuildMCP__swipe",
+      "mcp__XcodeBuildMCP__list_schems_proj",
+      "mcp__XcodeBuildMCP__get_sim_app_path_name_proj",
+      "mcp__XcodeBuildMCP__get_app_bundle_id",
+      "mcp__XcodeBuildMCP__list_sims",
+      "mcp__XcodeBuildMCP__boot_sim"
     ],
     "deny": []
   }
