@@ -223,7 +223,7 @@ struct CategoryCardView: View {
             }
             .padding(16)
             .frame(height: 160)
-            .frame(minWidth: 140)
+            .frame(maxWidth: .infinity)
             .background(Color(UIColor.systemBackground))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
