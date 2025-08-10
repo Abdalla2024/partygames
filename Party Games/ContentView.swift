@@ -43,10 +43,10 @@ struct ContentView: View {
         } else if let preferences = userPreferences {
             if !preferences.hasSeenOnboarding {
                 return .onboarding
-            } else if !preferences.hasRatedApp && !preferences.hasSeenRatingPrompt {
-                return .ratingPrompt
             } else if !preferences.isSubscriptionValid && !storeKitManager.hasPremiumAccess && !hasUserDismissedPaywall {
                 return .paywall
+            } else if !preferences.hasRatedApp && !preferences.hasSeenRatingPrompt {
+                return .ratingPrompt
             } else {
                 return .mainApp
             }

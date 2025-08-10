@@ -66,7 +66,7 @@ struct SettingsView: View {
                     Button("Done") {
                         onDismiss()
                     }
-                    .foregroundColor(Color(red: 0.118, green: 0.890, blue: 0.824))
+                    .foregroundColor(Color(red: 1, green: 1, blue: 1))
                 }
             }
             .task {
