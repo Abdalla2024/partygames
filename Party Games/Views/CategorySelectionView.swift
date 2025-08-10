@@ -229,7 +229,20 @@ struct CategorySelectionView: View {
     // MARK: - Computed Properties
     
     private var hasPremiumAccess: Bool {
-        return userPreferences?.isSubscriptionValid ?? false || storeKitManager.hasPremiumAccess
+        // Primary: Use StoreKitManager as the authoritative source of truth
+        if storeKitManager.hasPremiumAccess {
+            return true
+        }
+        
+        // Only use UserPreferences as fallback if StoreKitManager failed to load products
+        // This ensures we have offline functionality while maintaining StoreKit as source of truth
+        if !storeKitManager.products.isEmpty {
+            // StoreKitManager loaded successfully, trust its result (false)
+            return false
+        } else {
+            // StoreKitManager failed to load, use cached UserPreferences as fallback
+            return userPreferences?.isSubscriptionValid ?? false
+        }
     }
     
     // MARK: - Actions

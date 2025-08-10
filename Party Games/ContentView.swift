@@ -180,6 +180,9 @@ struct ContentView: View {
             // Load user preferences
             loadUserPreferences()
             
+            // Sync UserPreferences with current StoreKit status
+            await syncUserPreferencesWithStoreKit()
+            
             // Initialization complete
             isInitializing = false
             
@@ -256,6 +259,23 @@ struct ContentView: View {
     /// Load user preferences
     private func loadUserPreferences() {
         userPreferences = UserPreferences.getCurrentPreferences(from: modelContext)
+    }
+    
+    /// Sync UserPreferences with current StoreKit entitlements
+    private func syncUserPreferencesWithStoreKit() async {
+        guard let userPreferences = userPreferences else {
+            print("⚠️ Cannot sync - UserPreferences not loaded")
+            return
+        }
+        
+        do {
+            await storeKitManager.syncUserPreferencesWithStoreKit(userPreferences)
+            try modelContext.save()
+            print("✅ UserPreferences synced and saved successfully")
+        } catch {
+            print("❌ Error syncing UserPreferences with StoreKit: \(error)")
+            // Don't fail initialization due to sync errors
+        }
     }
     
     /// Handle onboarding completion

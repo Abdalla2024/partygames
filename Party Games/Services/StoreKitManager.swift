@@ -199,6 +199,55 @@ final class StoreKitManager {
         }
     }
     
+    /// Sync UserPreferences with current StoreKit entitlements
+    /// This ensures UserPreferences reflects actual subscription status from StoreKit
+    @MainActor
+    func syncUserPreferencesWithStoreKit(_ userPreferences: UserPreferences) async {
+        print("🔄 Starting sync of UserPreferences with StoreKit entitlements...")
+        
+        // Get current StoreKit premium access status
+        let currentStoreKitStatus = hasPremiumAccess
+        let currentUserPrefsStatus = userPreferences.hasPremiumAccess
+        
+        print("📊 Sync Status - StoreKit: \(currentStoreKitStatus), UserPreferences: \(currentUserPrefsStatus)")
+        
+        // Check if sync is needed
+        if currentStoreKitStatus != currentUserPrefsStatus {
+            print("⚠️ Status mismatch detected - updating UserPreferences to match StoreKit")
+            
+            if currentStoreKitStatus {
+                // User has premium access in StoreKit - update UserPreferences
+                if purchasedProductIDs.contains(ProductID.lifetime) {
+                    userPreferences.updateSubscription(
+                        type: UserPreferences.SubscriptionType.lifetime,
+                        hasPremium: true
+                    )
+                    print("✅ Updated UserPreferences to Lifetime Premium")
+                } else if purchasedProductIDs.contains(ProductID.weekly) {
+                    let expirationDate = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: Date())
+                    userPreferences.updateSubscription(
+                        type: UserPreferences.SubscriptionType.weekly,
+                        hasPremium: true,
+                        expirationDate: expirationDate
+                    )
+                    print("✅ Updated UserPreferences to Weekly Premium (expires: \(expirationDate?.formatted() ?? "Unknown"))")
+                }
+            } else {
+                // No premium access in StoreKit - remove from UserPreferences
+                userPreferences.hasPremiumAccess = false
+                userPreferences.subscriptionType = nil
+                userPreferences.subscriptionDate = nil
+                userPreferences.subscriptionExpirationDate = nil
+                userPreferences.updatedAt = Date()
+                print("✅ Removed premium access from UserPreferences (no active StoreKit entitlements)")
+            }
+        } else {
+            print("✅ UserPreferences already in sync with StoreKit - no update needed")
+        }
+        
+        print("🔄 UserPreferences sync completed")
+    }
+    
     // MARK: - Product Information
     func formattedPrice(for product: Product) -> String {
         return product.displayPrice

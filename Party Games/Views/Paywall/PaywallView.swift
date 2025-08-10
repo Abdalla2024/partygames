@@ -238,10 +238,28 @@ struct PaywallView: View {
                     .padding(.bottom, 8)
             }
             
-            Text("Cancel anytime. No commitments.")
-                .font(.system(size: 14, weight: .regular, design: .default))
-                .foregroundColor(.white.opacity(0.6))
-                .multilineTextAlignment(.center)
+            // Cancel anytime and links
+            HStack(spacing: 16) {
+                Text("Cancel anytime")
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Text("•")
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Link("Privacy Policy", destination: URL(string: "https://abdalla2024.github.io/GameNight/privacy.html")!)
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Text("•")
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Link("Terms of Use", destination: URL(string: "https://abdalla2024.github.io/GameNight/terms.html")!)
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+            }
         }
         .padding(.bottom, 20)
     }
