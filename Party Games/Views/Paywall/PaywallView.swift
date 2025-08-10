@@ -71,8 +71,8 @@ struct PaywallView: View {
                             .clipShape(Circle())
                     }
                 }
-                .padding(.top, 8)
-                .padding(.trailing, 24)
+                .padding(.top, 24)
+                .padding(.trailing, 28)
                 
                 Spacer()
             }
@@ -142,7 +142,7 @@ struct PaywallView: View {
     private var subscriptionPlansSection: some View {
         VStack(spacing: 16) {
             Text("Choose Your Plan")
-                .font(.system(size: 24, weight: .semibold, design: .default))
+                .font(.system(size: 22, weight: .semibold, design: .default))
                 .foregroundColor(.white)
                 .padding(.bottom, 8)
             
@@ -360,7 +360,7 @@ private struct SubscriptionCard: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .frame(height: 80) // Compact height
+            .frame(height: 90) // Compact height
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(

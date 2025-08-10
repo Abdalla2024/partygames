@@ -43,6 +43,7 @@ final class StoreKitManager {
         Task {
             await loadProducts()
             await updatePurchasedProducts()
+            await listenForTransactionUpdates()
         }
     }
     
@@ -139,6 +140,43 @@ final class StoreKitManager {
         }
         
         self.purchasedProductIDs = purchasedProducts
+    }
+    
+    // MARK: - Transaction Updates Listener
+    
+    /// Listen for transaction updates that occur outside of direct purchases
+    /// This ensures we don't miss purchases completed on other devices or background renewals
+    private func listenForTransactionUpdates() async {
+        // Create a task that continuously listens for transaction updates
+        Task {
+            for await verificationResult in Transaction.updates {
+                await handleTransactionUpdate(verificationResult)
+            }
+        }
+    }
+    
+    /// Handle individual transaction updates
+    @MainActor
+    private func handleTransactionUpdate(_ verificationResult: VerificationResult<Transaction>) async {
+        switch verificationResult {
+        case .verified(let transaction):
+            // Only process transactions that haven't been revoked
+            if transaction.revocationDate == nil {
+                purchasedProductIDs.insert(transaction.productID)
+                print("Transaction update processed: \(transaction.productID)")
+            } else {
+                // Remove revoked transactions
+                purchasedProductIDs.remove(transaction.productID)
+                print("Transaction revoked: \(transaction.productID)")
+            }
+            
+            // Finish the transaction to acknowledge receipt
+            await transaction.finish()
+            
+        case .unverified(let transaction, let verificationError):
+            print("Unverified transaction update: \(transaction.productID), error: \(verificationError)")
+            // Don't finish unverified transactions
+        }
     }
     
     // MARK: - User Preferences Integration
