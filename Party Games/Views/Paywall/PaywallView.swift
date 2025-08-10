@@ -13,7 +13,7 @@ struct PaywallView: View {
     // MARK: - Properties
     
     @State var storeKitManager: StoreKitManager
-    @State private var selectedPlan: String = "lifetimeplan" // Default to lifetime
+    @State private var selectedPlan: String = "weekly_399" // Default to lifetime
     
     let onPurchaseComplete: () -> Void
     let onDismiss: (() -> Void)?
@@ -188,8 +188,13 @@ struct PaywallView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.9)
                     } else {
-                        Text("Continue")
-                            .font(.system(size: 18, weight: .semibold, design: .default))
+                        if selectedPlan == "weekly_399" {
+                            Text("Try for Free")
+                                .font(.system(size: 18, weight: .semibold, design: .default))
+                        } else {
+                            Text("Continue")
+                                .font(.system(size: 18, weight: .semibold, design: .default))
+                        }
                     }
                 }
                 .foregroundColor(.white)
@@ -315,18 +320,25 @@ private struct SubscriptionCard: View {
                         Text(title)
                             .font(.system(size: 18, weight: .bold, design: .default))
                             .foregroundColor(.white)
+                            .lineLimit(nil) // unlimited lines
+                            .layoutPriority(1) // make this higher priority than others
+                        
+                        if title == "Lifetime Plan" {
+                            Image(systemName: "infinity")
+                                .font(.system(size: 16, weight: .bold))
+                                .padding(.trailing, 4)
+                        }
                         
                         if let badge = badge, let badgeColor = badgeColor {
                             Text(badge)
-                                .font(.system(size: 10, weight: .bold, design: .default))
+                                .font(.system(size: 12, weight: .bold, design: .default))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 8)
+                                .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(badgeColor)
                                 .clipShape(Capsule())
                         }
                         
-                        Spacer()
                     }
                     
                     // Price with optional original price
