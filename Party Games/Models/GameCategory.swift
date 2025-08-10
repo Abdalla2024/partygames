@@ -124,10 +124,10 @@ extension GameCategory {
     /// Categories that require premium subscription
     static let premiumCategoryNames: Set<String> = [
         "Truth or Dare",
-        "Would You Rather", 
-        "Never Have I Ever",
-        "How Well Do You Know Me",
-        "This or That"
+        "This or That",
+        "Who's Most Likely To",
+        "Impersonation", 
+        "Bucket List"
     ]
     
     /// Check if a category name should be premium

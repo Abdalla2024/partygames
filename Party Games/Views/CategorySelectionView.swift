@@ -26,11 +26,11 @@ struct CategorySelectionView: View {
     /// User preferences for premium status
     @State private var userPreferences: UserPreferences?
     
-    /// Search text for filtering categories
-    @State private var searchText = ""
-    
     /// Paywall presentation state
     @State private var showingPaywall = false
+    
+    /// Settings presentation state
+    @State private var showingSettings = false
     
     /// Selected premium category (when paywall is shown)
     @State private var selectedPremiumCategory: GameCategory?
@@ -48,7 +48,16 @@ struct CategorySelectionView: View {
         NavigationStack {
             contentView
                 .navigationTitle("Party Games")
-                .searchable(text: $searchText, prompt: "Search categories...")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundColor(Color(red: 0.118, green: 0.890, blue: 0.824))
+                        }
+                    }
+                }
                 .task {
                     await loadInitialData()
                     loadUserPreferences()
@@ -65,6 +74,15 @@ struct CategorySelectionView: View {
                         onDismiss: {
                             showingPaywall = false
                             selectedPremiumCategory = nil
+                        }
+                    )
+                }
+                .sheet(isPresented: $showingSettings) {
+                    SettingsView(
+                        storeKitManager: storeKitManager,
+                        modelContext: modelContext,
+                        onDismiss: {
+                            showingSettings = false
                         }
                     )
                 }
@@ -100,6 +118,7 @@ struct CategorySelectionView: View {
                         }) {
                             CategoryCardView(
                                 category: category,
+                                showCrown: category.isPremium && !hasPremiumAccess,
                                 onTap: { }
                             )
                         }
@@ -109,6 +128,7 @@ struct CategorySelectionView: View {
                         NavigationLink(destination: GameSessionView(category: category, modelContext: modelContext)) {
                             CategoryCardView(
                                 category: category,
+                                showCrown: category.isPremium && !hasPremiumAccess,
                                 onTap: { }
                             )
                         }
@@ -128,14 +148,18 @@ struct CategorySelectionView: View {
         ]
     }
     
-    // MARK: - Filtered Categories
+    // MARK: - Sorted Categories
     
     private var filteredCategories: [GameCategory] {
-        if searchText.isEmpty {
-            return categoriesViewModel.categories
-        } else {
-            return categoriesViewModel.categories.filter { category in
-                category.name.localizedCaseInsensitiveContains(searchText)
+        // Sort categories: free games first, then premium games
+        // Within each group, sort alphabetically by name
+        return categoriesViewModel.categories.sorted { category1, category2 in
+            if category1.isPremium == category2.isPremium {
+                // Both have same premium status, sort alphabetically
+                return category1.name.localizedCaseInsensitiveCompare(category2.name) == .orderedAscending
+            } else {
+                // Different premium status, free games (isPremium = false) come first
+                return !category1.isPremium && category2.isPremium
             }
         }
     }
@@ -193,7 +217,7 @@ struct CategorySelectionView: View {
             Text("No Categories Found")
                 .font(.headline)
             
-            Text(searchText.isEmpty ? "No game categories available" : "No categories match '\(searchText)'")
+            Text("No game categories available")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -249,6 +273,7 @@ struct CategorySelectionView: View {
 
 struct CategoryCardView: View {
     let category: GameCategory
+    let showCrown: Bool
     let onTap: () -> Void
     
     var body: some View {
@@ -293,7 +318,7 @@ struct CategoryCardView: View {
             .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
             
             // Premium Crown Badge
-            if category.isPremium {
+            if showCrown {
                 VStack {
                     HStack {
                         Spacer()
@@ -349,6 +374,7 @@ struct CategoryCardView: View {
     
     CategoryCardView(
         category: sampleCategory,
+        showCrown: true,
         onTap: {}
     )
     .frame(width: 160, height: 200)
