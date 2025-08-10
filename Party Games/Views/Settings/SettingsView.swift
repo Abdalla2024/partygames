@@ -154,11 +154,11 @@ struct SettingsView: View {
                 }
             }
             
-            // Rate This App
+            // Rate This App and Unlock a Gift
             SettingsRowButton(
                 icon: "heart.fill",
-                title: "Rate This App",
-                subtitle: "Help us improve Party Games",
+                title: "Rate This App and Unlock a Gift",
+                subtitle: "Help us improve and get rewarded",
                 iconColor: Color(red: 0.118, green: 0.890, blue: 0.824),
                 showChevron: true
             ) {

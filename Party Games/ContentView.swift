@@ -29,6 +29,7 @@ struct ContentView: View {
     private enum FlowStep {
         case initializing
         case onboarding
+        case ratingPrompt
         case paywall
         case mainApp
         case error
@@ -42,6 +43,8 @@ struct ContentView: View {
         } else if let preferences = userPreferences {
             if !preferences.hasSeenOnboarding {
                 return .onboarding
+            } else if !preferences.hasRatedApp && !preferences.hasSeenRatingPrompt {
+                return .ratingPrompt
             } else if !preferences.isSubscriptionValid && !storeKitManager.hasPremiumAccess && !hasUserDismissedPaywall {
                 return .paywall
             } else {
@@ -63,6 +66,15 @@ struct ContentView: View {
                 OnboardingView {
                     handleOnboardingComplete()
                 }
+            case .ratingPrompt:
+                RatingPromptView(
+                    onRatingComplete: {
+                        handleRatingComplete()
+                    },
+                    onDismiss: {
+                        handleRatingDismiss()
+                    }
+                )
             case .paywall:
                 PaywallView(
                     storeKitManager: storeKitManager,
@@ -244,15 +256,22 @@ struct ContentView: View {
         
         for category in categories {
             let shouldBePremium = GameCategory.shouldBePremium(category.name)
+            let shouldBeRatingUnlockable = GameCategory.shouldBeRatingUnlockable(category.name)
+            
             if category.isPremium != shouldBePremium {
                 category.isPremium = shouldBePremium
+                hasChanges = true
+            }
+            
+            if category.isRatingUnlockable != shouldBeRatingUnlockable {
+                category.isRatingUnlockable = shouldBeRatingUnlockable
                 hasChanges = true
             }
         }
         
         if hasChanges {
             try modelContext.save()
-            print("Updated premium status for categories")
+            print("Updated premium and rating-unlockable status for categories")
         }
     }
     
@@ -300,6 +319,30 @@ struct ContentView: View {
             } catch {
                 print("Error saving premium status: \(error)")
             }
+        }
+    }
+    
+    /// Handle rating completion
+    private func handleRatingComplete() {
+        userPreferences?.markAppAsRated()
+        
+        do {
+            try modelContext.save()
+            print("Rating completed - This or That category unlocked")
+        } catch {
+            print("Error saving rating completion: \(error)")
+        }
+    }
+    
+    /// Handle rating prompt dismissal (user chooses "Maybe Later")
+    private func handleRatingDismiss() {
+        userPreferences?.markRatingPromptSeen()
+        
+        do {
+            try modelContext.save()
+            print("Rating prompt dismissed - continuing to main app")
+        } catch {
+            print("Error saving rating prompt dismissal: \(error)")
         }
     }
     

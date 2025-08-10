@@ -29,6 +29,15 @@ final class UserPreferences {
     /// When the subscription expires (for weekly subscriptions)
     var subscriptionExpirationDate: Date?
     
+    /// Whether the user has rated the app
+    var hasRatedApp: Bool
+    
+    /// When the rating prompt was last shown
+    var ratingPromptDate: Date?
+    
+    /// Whether the user has seen the rating prompt
+    var hasSeenRatingPrompt: Bool
+    
     /// Creation date
     var createdAt: Date
     
@@ -40,7 +49,10 @@ final class UserPreferences {
         hasPremiumAccess: Bool = false,
         subscriptionType: String? = nil,
         subscriptionDate: Date? = nil,
-        subscriptionExpirationDate: Date? = nil
+        subscriptionExpirationDate: Date? = nil,
+        hasRatedApp: Bool = false,
+        ratingPromptDate: Date? = nil,
+        hasSeenRatingPrompt: Bool = false
     ) {
         self.id = UUID()
         self.hasSeenOnboarding = hasSeenOnboarding
@@ -48,6 +60,9 @@ final class UserPreferences {
         self.subscriptionType = subscriptionType
         self.subscriptionDate = subscriptionDate
         self.subscriptionExpirationDate = subscriptionExpirationDate
+        self.hasRatedApp = hasRatedApp
+        self.ratingPromptDate = ratingPromptDate
+        self.hasSeenRatingPrompt = hasSeenRatingPrompt
         self.createdAt = Date()
         self.updatedAt = Date()
     }
@@ -68,6 +83,19 @@ final class UserPreferences {
     /// Mark onboarding as completed
     func completeOnboarding() {
         self.hasSeenOnboarding = true
+        self.updatedAt = Date()
+    }
+    
+    /// Mark app as rated
+    func markAppAsRated() {
+        self.hasRatedApp = true
+        self.updatedAt = Date()
+    }
+    
+    /// Mark rating prompt as seen
+    func markRatingPromptSeen() {
+        self.hasSeenRatingPrompt = true
+        self.ratingPromptDate = Date()
         self.updatedAt = Date()
     }
     

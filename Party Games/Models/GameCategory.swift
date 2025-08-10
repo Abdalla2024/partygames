@@ -31,6 +31,9 @@ final class GameCategory {
     /// Whether this category requires premium subscription
     var isPremium: Bool
     
+    /// Whether this category can be unlocked by rating the app
+    var isRatingUnlockable: Bool
+    
     /// Relationship to game cards
     @Relationship(deleteRule: .cascade, inverse: \GameCard.category)
     var cards: [GameCard] = []
@@ -39,7 +42,7 @@ final class GameCategory {
     @Relationship(deleteRule: .cascade, inverse: \GameSession.category)
     var sessions: [GameSession] = []
     
-    init(name: String, iconName: String, cardCount: Int = 0, isPremium: Bool = false) {
+    init(name: String, iconName: String, cardCount: Int = 0, isPremium: Bool = false, isRatingUnlockable: Bool = false) {
         self.id = UUID()
         self.name = name
         self.iconName = iconName
@@ -47,6 +50,7 @@ final class GameCategory {
         self.createdAt = Date()
         self.isActive = true
         self.isPremium = isPremium
+        self.isRatingUnlockable = isRatingUnlockable
     }
     
     /// Computed property to get actual card count from relationship
@@ -124,10 +128,14 @@ extension GameCategory {
     /// Categories that require premium subscription
     static let premiumCategoryNames: Set<String> = [
         "Truth or Dare",
-        "This or That",
         "Who's Most Likely To",
         "Impersonation", 
         "Bucket List"
+    ]
+    
+    /// Categories that can be unlocked by rating the app
+    static let ratingUnlockableCategoryNames: Set<String> = [
+        "This or That"
     ]
     
     /// Check if a category name should be premium
@@ -135,8 +143,14 @@ extension GameCategory {
         return premiumCategoryNames.contains(categoryName)
     }
     
+    /// Check if a category name should be rating-unlockable
+    static func shouldBeRatingUnlockable(_ categoryName: String) -> Bool {
+        return ratingUnlockableCategoryNames.contains(categoryName)
+    }
+    
     /// Update premium status based on category name
     func updatePremiumStatus() {
         self.isPremium = GameCategory.shouldBePremium(self.name)
+        self.isRatingUnlockable = GameCategory.shouldBeRatingUnlockable(self.name)
     }
 }
