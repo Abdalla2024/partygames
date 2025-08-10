@@ -86,6 +86,10 @@ final class GameCategory {
             return "story_time"
         case "bucket list":
             return "bucket_list"
+        case "let's get deep":
+            return "let's_get_deep"
+        case "name game":
+            return "name_game"
         default:
             return "questionmark.circle"
         }
@@ -130,7 +134,9 @@ extension GameCategory {
         "Truth or Dare",
         "Who's Most Likely To",
         "Impersonation", 
-        "Bucket List"
+        "Bucket List",
+        "Let's Get Deep",
+        "Name Game"
     ]
     
     /// Categories that can be unlocked by rating the app
