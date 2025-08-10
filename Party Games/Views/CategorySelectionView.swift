@@ -26,14 +26,20 @@ struct CategorySelectionView: View {
     /// User preferences for premium status
     @State private var userPreferences: UserPreferences?
     
-    /// Search text for filtering categories
-    @State private var searchText = ""
-    
     /// Paywall presentation state
     @State private var showingPaywall = false
     
+    /// Rating prompt presentation state
+    @State private var showingRatingPrompt = false
+    
+    /// Settings presentation state
+    @State private var showingSettings = false
+    
     /// Selected premium category (when paywall is shown)
     @State private var selectedPremiumCategory: GameCategory?
+    
+    /// Selected rating-unlockable category (when rating prompt is shown)
+    @State private var selectedRatingCategory: GameCategory?
     
     // MARK: - Initialization
     
@@ -48,7 +54,16 @@ struct CategorySelectionView: View {
         NavigationStack {
             contentView
                 .navigationTitle("Party Games")
-                .searchable(text: $searchText, prompt: "Search categories...")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundColor(Color(red: 0.118, green: 0.890, blue: 0.824))
+                        }
+                    }
+                }
                 .task {
                     await loadInitialData()
                     loadUserPreferences()
@@ -65,6 +80,25 @@ struct CategorySelectionView: View {
                         onDismiss: {
                             showingPaywall = false
                             selectedPremiumCategory = nil
+                        }
+                    )
+                }
+                .sheet(isPresented: $showingRatingPrompt) {
+                    RatingPromptView(
+                        onRatingComplete: {
+                            handleRatingComplete()
+                        },
+                        onDismiss: {
+                            handleRatingDismiss()
+                        }
+                    )
+                }
+                .sheet(isPresented: $showingSettings) {
+                    SettingsView(
+                        storeKitManager: storeKitManager,
+                        modelContext: modelContext,
+                        onDismiss: {
+                            showingSettings = false
                         }
                     )
                 }
@@ -100,15 +134,30 @@ struct CategorySelectionView: View {
                         }) {
                             CategoryCardView(
                                 category: category,
+                                badgeType: .crown,
+                                onTap: { }
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    } else if category.isRatingUnlockable && !hasRatedApp {
+                        // Rating-unlockable category - show rating prompt
+                        Button(action: {
+                            selectedRatingCategory = category
+                            showingRatingPrompt = true
+                        }) {
+                            CategoryCardView(
+                                category: category,
+                                badgeType: .star,
                                 onTap: { }
                             )
                         }
                         .buttonStyle(.plain)
                     } else {
-                        // Free category or user has premium - navigate to game
+                        // Free category, user has premium, or user has rated - navigate to game
                         NavigationLink(destination: GameSessionView(category: category, modelContext: modelContext)) {
                             CategoryCardView(
                                 category: category,
+                                badgeType: .none,
                                 onTap: { }
                             )
                         }
@@ -128,14 +177,18 @@ struct CategorySelectionView: View {
         ]
     }
     
-    // MARK: - Filtered Categories
+    // MARK: - Sorted Categories
     
     private var filteredCategories: [GameCategory] {
-        if searchText.isEmpty {
-            return categoriesViewModel.categories
-        } else {
-            return categoriesViewModel.categories.filter { category in
-                category.name.localizedCaseInsensitiveContains(searchText)
+        // Sort categories: free games first, then premium games
+        // Within each group, sort alphabetically by name
+        return categoriesViewModel.categories.sorted { category1, category2 in
+            if category1.isPremium == category2.isPremium {
+                // Both have same premium status, sort alphabetically
+                return category1.name.localizedCaseInsensitiveCompare(category2.name) == .orderedAscending
+            } else {
+                // Different premium status, free games (isPremium = false) come first
+                return !category1.isPremium && category2.isPremium
             }
         }
     }
@@ -193,7 +246,7 @@ struct CategorySelectionView: View {
             Text("No Categories Found")
                 .font(.headline)
             
-            Text(searchText.isEmpty ? "No game categories available" : "No categories match '\(searchText)'")
+            Text("No game categories available")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -205,7 +258,24 @@ struct CategorySelectionView: View {
     // MARK: - Computed Properties
     
     private var hasPremiumAccess: Bool {
-        return userPreferences?.isSubscriptionValid ?? false || storeKitManager.hasPremiumAccess
+        // Primary: Use StoreKitManager as the authoritative source of truth
+        if storeKitManager.hasPremiumAccess {
+            return true
+        }
+        
+        // Only use UserPreferences as fallback if StoreKitManager failed to load products
+        // This ensures we have offline functionality while maintaining StoreKit as source of truth
+        if !storeKitManager.products.isEmpty {
+            // StoreKitManager loaded successfully, trust its result (false)
+            return false
+        } else {
+            // StoreKitManager failed to load, use cached UserPreferences as fallback
+            return userPreferences?.isSubscriptionValid ?? false
+        }
+    }
+    
+    private var hasRatedApp: Bool {
+        return userPreferences?.hasRatedApp ?? false
     }
     
     // MARK: - Actions
@@ -243,12 +313,56 @@ struct CategorySelectionView: View {
             // The navigation will now work since user has premium access
         }
     }
+    
+    private func handleRatingComplete() {
+        // Update user preferences with rating completion
+        userPreferences?.markAppAsRated()
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error saving user preferences after rating: \(error)")
+        }
+        
+        // Dismiss rating prompt
+        showingRatingPrompt = false
+        
+        // Navigate to the selected rating-unlockable category if one was selected
+        if let category = selectedRatingCategory {
+            selectedRatingCategory = nil
+            // The navigation will now work since user has rated the app
+        }
+    }
+    
+    private func handleRatingDismiss() {
+        // Mark rating prompt as seen
+        userPreferences?.markRatingPromptSeen()
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error saving rating prompt dismissal: \(error)")
+        }
+        
+        // Dismiss rating prompt
+        showingRatingPrompt = false
+        selectedRatingCategory = nil
+    }
+}
+
+// MARK: - Category Badge Type
+
+enum CategoryBadgeType {
+    case crown    // Premium
+    case star     // Rating unlockable
+    case none     // Free/unlocked
 }
 
 // MARK: - Category Card View
 
 struct CategoryCardView: View {
     let category: GameCategory
+    let badgeType: CategoryBadgeType
     let onTap: () -> Void
     
     var body: some View {
@@ -292,8 +406,8 @@ struct CategoryCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
             
-            // Premium Crown Badge
-            if category.isPremium {
+            // Badge (Crown for premium, Star for rating-unlockable)
+            if badgeType != .none {
                 VStack {
                     HStack {
                         Spacer()
@@ -303,18 +417,25 @@ struct CategoryCardView: View {
                                 .fill(Color.black)
                                 .frame(width: 28, height: 28)
                             
-                            Image(systemName: "crown.fill")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color(red: 1.0, green: 0.84, blue: 0.0),  // Gold
-                                            Color(red: 1.0, green: 0.72, blue: 0.0)   // Darker gold
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
+                            Group {
+                                if badgeType == .crown {
+                                    Image(systemName: "crown.fill")
+                                        .font(.system(size: 14, weight: .medium))
+                                } else if badgeType == .star {
+                                    Image(systemName: "star.fill")
+                                        .font(.system(size: 14, weight: .medium))
+                                }
+                            }
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 1.0, green: 0.84, blue: 0.0),  // Gold
+                                        Color(red: 1.0, green: 0.72, blue: 0.0)   // Darker gold
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
                                 )
+                            )
                         }
                         .shadow(color: Color(red: 1.0, green: 0.84, blue: 0.0).opacity(0.4), radius: 4, x: 0, y: 2)
                         .offset(x: -4, y: 4)
@@ -325,8 +446,19 @@ struct CategoryCardView: View {
         }
         .accessibilityLabel(category.name)
         .accessibilityValue("\(category.cards.count) cards available")
-        .accessibilityHint(category.isPremium ? "Premium content - Double tap to upgrade" : "Double tap to start playing")
+        .accessibilityHint(accessibilityHintText)
         .accessibilityAddTraits(.isButton)
+    }
+    
+    private var accessibilityHintText: String {
+        switch badgeType {
+        case .crown:
+            return "Premium content - Double tap to upgrade"
+        case .star:
+            return "Rate the app to unlock - Double tap to rate"
+        case .none:
+            return "Double tap to start playing"
+        }
     }
 }
 
@@ -349,6 +481,7 @@ struct CategoryCardView: View {
     
     CategoryCardView(
         category: sampleCategory,
+        badgeType: .crown,
         onTap: {}
     )
     .frame(width: 160, height: 200)

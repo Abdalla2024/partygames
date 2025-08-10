@@ -13,7 +13,7 @@ struct PaywallView: View {
     // MARK: - Properties
     
     @State var storeKitManager: StoreKitManager
-    @State private var selectedPlan: String = "lifetimeplan" // Default to lifetime
+    @State private var selectedPlan: String = "weekly_399" // Default to lifetime
     
     let onPurchaseComplete: () -> Void
     let onDismiss: (() -> Void)?
@@ -71,8 +71,8 @@ struct PaywallView: View {
                             .clipShape(Circle())
                     }
                 }
-                .padding(.top, 8)
-                .padding(.trailing, 24)
+                .padding(.top, 24)
+                .padding(.trailing, 28)
                 
                 Spacer()
             }
@@ -142,7 +142,7 @@ struct PaywallView: View {
     private var subscriptionPlansSection: some View {
         VStack(spacing: 16) {
             Text("Choose Your Plan")
-                .font(.system(size: 24, weight: .semibold, design: .default))
+                .font(.system(size: 22, weight: .semibold, design: .default))
                 .foregroundColor(.white)
                 .padding(.bottom, 8)
             
@@ -188,8 +188,13 @@ struct PaywallView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.9)
                     } else {
-                        Text("Continue")
-                            .font(.system(size: 18, weight: .semibold, design: .default))
+                        if selectedPlan == "weekly_399" {
+                            Text("Try for Free")
+                                .font(.system(size: 18, weight: .semibold, design: .default))
+                        } else {
+                            Text("Continue")
+                                .font(.system(size: 18, weight: .semibold, design: .default))
+                        }
                     }
                 }
                 .foregroundColor(.white)
@@ -233,10 +238,28 @@ struct PaywallView: View {
                     .padding(.bottom, 8)
             }
             
-            Text("Cancel anytime. No commitments.")
-                .font(.system(size: 14, weight: .regular, design: .default))
-                .foregroundColor(.white.opacity(0.6))
-                .multilineTextAlignment(.center)
+            // Cancel anytime and links
+            HStack(spacing: 16) {
+                Text("Cancel anytime")
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Text("•")
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Link("Privacy Policy", destination: URL(string: "https://abdalla2024.github.io/GameNight/privacy.html")!)
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Text("•")
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+                
+                Link("Terms of Use", destination: URL(string: "https://abdalla2024.github.io/GameNight/terms.html")!)
+                    .font(.system(size: 14, weight: .regular, design: .default))
+                    .foregroundColor(.white.opacity(0.6))
+            }
         }
         .padding(.bottom, 20)
     }
@@ -315,18 +338,25 @@ private struct SubscriptionCard: View {
                         Text(title)
                             .font(.system(size: 18, weight: .bold, design: .default))
                             .foregroundColor(.white)
+                            .lineLimit(nil) // unlimited lines
+                            .layoutPriority(1) // make this higher priority than others
+                        
+                        if title == "Lifetime Plan" {
+                            Image(systemName: "infinity")
+                                .font(.system(size: 16, weight: .bold))
+                                .padding(.trailing, 4)
+                        }
                         
                         if let badge = badge, let badgeColor = badgeColor {
                             Text(badge)
-                                .font(.system(size: 10, weight: .bold, design: .default))
+                                .font(.system(size: 12, weight: .bold, design: .default))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 8)
+                                .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(badgeColor)
                                 .clipShape(Capsule())
                         }
                         
-                        Spacer()
                     }
                     
                     // Price with optional original price
@@ -360,7 +390,7 @@ private struct SubscriptionCard: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .frame(height: 80) // Compact height
+            .frame(height: 90) // Compact height
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(

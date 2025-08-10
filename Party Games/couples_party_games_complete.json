@@ -2564,6 +2564,506 @@
             "game": "Impersonation",
             "number": 51,
             "prompt": "Imitate my laugh in slow motion."
+        },
+        {
+            "game": "Name Game",
+            "number": 1,
+            "prompt": "Say a type of fruit."
+        },
+        {
+            "game": "Name Game",
+            "number": 2,
+            "prompt": "Say a country."
+        },
+        {
+            "game": "Name Game",
+            "number": 3,
+            "prompt": "Say a type of animal."
+        },
+        {
+            "game": "Name Game",
+            "number": 4,
+            "prompt": "Say a color."
+        },
+        {
+            "game": "Name Game",
+            "number": 5,
+            "prompt": "Say a movie title."
+        },
+        {
+            "game": "Name Game",
+            "number": 6,
+            "prompt": "Say a song title."
+        },
+        {
+            "game": "Name Game",
+            "number": 7,
+            "prompt": "Say a celebrity's name."
+        },
+        {
+            "game": "Name Game",
+            "number": 8,
+            "prompt": "Say a type of car."
+        },
+        {
+            "game": "Name Game",
+            "number": 9,
+            "prompt": "Say a city name."
+        },
+        {
+            "game": "Name Game",
+            "number": 10,
+            "prompt": "Say a food dish."
+        },
+        {
+            "game": "Name Game",
+            "number": 11,
+            "prompt": "Say a sport."
+        },
+        {
+            "game": "Name Game",
+            "number": 12,
+            "prompt": "Say a vegetable."
+        },
+        {
+            "game": "Name Game",
+            "number": 13,
+            "prompt": "Say a TV show."
+        },
+        {
+            "game": "Name Game",
+            "number": 14,
+            "prompt": "Say a drink."
+        },
+        {
+            "game": "Name Game",
+            "number": 15,
+            "prompt": "Say something in the ocean."
+        },
+        {
+            "game": "Name Game",
+            "number": 16,
+            "prompt": "Say a hobby."
+        },
+        {
+            "game": "Name Game",
+            "number": 17,
+            "prompt": "Say a profession."
+        },
+        {
+            "game": "Name Game",
+            "number": 18,
+            "prompt": "Say something you wear."
+        },
+        {
+            "game": "Name Game",
+            "number": 19,
+            "prompt": "Say a type of weather."
+        },
+        {
+            "game": "Name Game",
+            "number": 20,
+            "prompt": "Say a holiday."
+        },
+        {
+            "game": "Name Game",
+            "number": 21,
+            "prompt": "Say something in the kitchen."
+        },
+        {
+            "game": "Name Game",
+            "number": 22,
+            "prompt": "Say a flower."
+        },
+        {
+            "game": "Name Game",
+            "number": 23,
+            "prompt": "Say a dessert."
+        },
+        {
+            "game": "Name Game",
+            "number": 24,
+            "prompt": "Say a book title."
+        },
+        {
+            "game": "Name Game",
+            "number": 25,
+            "prompt": "Say something at the beach."
+        },
+        {
+            "game": "Name Game",
+            "number": 26,
+            "prompt": "Say a type of bird."
+        },
+        {
+            "game": "Name Game",
+            "number": 27,
+            "prompt": "Say something in the sky."
+        },
+        {
+            "game": "Name Game",
+            "number": 28,
+            "prompt": "Say a shape."
+        },
+        {
+            "game": "Name Game",
+            "number": 29,
+            "prompt": "Say something in a park."
+        },
+        {
+            "game": "Name Game",
+            "number": 30,
+            "prompt": "Say a type of clothing brand."
+        },
+        {
+            "game": "Name Game",
+            "number": 31,
+            "prompt": "Say something in the bathroom."
+        },
+        {
+            "game": "Name Game",
+            "number": 32,
+            "prompt": "Say something you can ride."
+        },
+        {
+            "game": "Name Game",
+            "number": 33,
+            "prompt": "Say something you can open."
+        },
+        {
+            "game": "Name Game",
+            "number": 34,
+            "prompt": "Say a school subject."
+        },
+        {
+            "game": "Name Game",
+            "number": 35,
+            "prompt": "Say something in a grocery store."
+        },
+        {
+            "game": "Name Game",
+            "number": 36,
+            "prompt": "Say a famous landmark."
+        },
+        {
+            "game": "Name Game",
+            "number": 37,
+            "prompt": "Say something you use daily."
+        },
+        {
+            "game": "Name Game",
+            "number": 38,
+            "prompt": "Say a body part."
+        },
+        {
+            "game": "Name Game",
+            "number": 39,
+            "prompt": "Say something hot."
+        },
+        {
+            "game": "Name Game",
+            "number": 40,
+            "prompt": "Say something cold."
+        },
+        {
+            "game": "Name Game",
+            "number": 41,
+            "prompt": "Say something in the living room."
+        },
+        {
+            "game": "Name Game",
+            "number": 42,
+            "prompt": "Say a sweet food."
+        },
+        {
+            "game": "Name Game",
+            "number": 43,
+            "prompt": "Say something you do at night."
+        },
+        {
+            "game": "Name Game",
+            "number": 44,
+            "prompt": "Say something you do in the morning."
+        },
+        {
+            "game": "Name Game",
+            "number": 45,
+            "prompt": "Say a number."
+        },
+        {
+            "game": "Name Game",
+            "number": 46,
+            "prompt": "Say something that makes noise."
+        },
+        {
+            "game": "Name Game",
+            "number": 47,
+            "prompt": "Say a tool."
+        },
+        {
+            "game": "Name Game",
+            "number": 48,
+            "prompt": "Say a toy."
+        },
+        {
+            "game": "Name Game",
+            "number": 49,
+            "prompt": "Say a musical instrument."
+        },
+        {
+            "game": "Name Game",
+            "number": 50,
+            "prompt": "Say something that flies."
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 1,
+            "prompt": "What is your biggest dream in life?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 2,
+            "prompt": "What is something you wish you could tell your younger self?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 3,
+            "prompt": "What is the hardest decision you’ve ever had to make?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 4,
+            "prompt": "What is something you’re most proud of?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 5,
+            "prompt": "What scares you the most about the future?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 6,
+            "prompt": "What is a lesson you’ve learned the hard way?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 7,
+            "prompt": "Who has had the biggest impact on your life?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 8,
+            "prompt": "What is your biggest regret?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 9,
+            "prompt": "What does love mean to you?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 10,
+            "prompt": "What is something you’ve never told anyone?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 11,
+            "prompt": "What motivates you to keep going?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 12,
+            "prompt": "What is a goal you’re currently working toward?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 13,
+            "prompt": "What is your happiest memory?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 14,
+            "prompt": "What is something you wish more people understood about you?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 15,
+            "prompt": "What is your definition of success?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 16,
+            "prompt": "What is a fear you’ve overcome?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 17,
+            "prompt": "What is something you’re currently struggling with?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 18,
+            "prompt": "What is a relationship that changed you?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 19,
+            "prompt": "What is your favorite childhood memory?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 20,
+            "prompt": "What is something you’re looking forward to?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 21,
+            "prompt": "What is your biggest strength?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 22,
+            "prompt": "What is your biggest weakness?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 23,
+            "prompt": "What is something that makes you feel alive?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 24,
+            "prompt": "What is the best advice you’ve ever received?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 25,
+            "prompt": "What is something you wish you could change about yourself?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 26,
+            "prompt": "What is something you’ve done that you never thought you could do?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 27,
+            "prompt": "What is your favorite thing about yourself?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 28,
+            "prompt": "What is a risk you’re glad you took?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 29,
+            "prompt": "What is something you’ve learned about love?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 30,
+            "prompt": "What is your dream job?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 31,
+            "prompt": "What is your favorite thing about our relationship?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 32,
+            "prompt": "What is something that makes you feel loved?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 33,
+            "prompt": "What is a habit you want to break?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 34,
+            "prompt": "What is a habit you want to build?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 35,
+            "prompt": "What is something that always makes you laugh?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 36,
+            "prompt": "What is your most embarrassing moment?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 37,
+            "prompt": "What is something you’ve always wanted to try?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 38,
+            "prompt": "What is a skill you want to learn?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 39,
+            "prompt": "What is your love language?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 40,
+            "prompt": "What is something you’re afraid to lose?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 41,
+            "prompt": "What is something you wish you had more time for?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 42,
+            "prompt": "What is something you value most in a friendship?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 43,
+            "prompt": "What is the kindest thing someone has done for you?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 44,
+            "prompt": "What is something you wish you could relive?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 45,
+            "prompt": "What is your favorite tradition?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 46,
+            "prompt": "What is something you’ve never done but want to do?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 47,
+            "prompt": "What is your idea of a perfect day?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 48,
+            "prompt": "What is your favorite way to relax?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 49,
+            "prompt": "What is a secret talent you have?"
+        },
+        {
+            "game": "Let's Get Deep",
+            "number": 50,
+            "prompt": "What is something you’re grateful for today?"
         }
     ]
 }
